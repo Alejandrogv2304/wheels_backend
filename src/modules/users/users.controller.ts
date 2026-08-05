@@ -1,8 +1,9 @@
 import { Controller,Get, HttpCode, HttpStatus } from '@nestjs/common';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from 'src/common/types/authenticated-user';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
 
