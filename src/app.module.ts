@@ -3,15 +3,13 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-// import { UsersModule } from './modules/users/users.module';
-// import { AuthModule } from './modules/auth/auth.module';
-// import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
+import { SupabaseModule } from './modules/supabase/supabase.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
   imports: [
-    //Con esta configuración solo estamos permitiendo 15 peticiones por minuto por IP
     ThrottlerModule.forRoot([
       {
         ttl: 60000,
@@ -42,17 +40,15 @@ import { UsersModule } from './modules/users/users.module';
       }),
       inject: [ConfigService],
     }),
-    // UsersModule,
+    SupabaseModule,
     JwtModule.register({global: true}),
     AuthModule,
     UsersModule,
-    // AuthModule,
   ],
   
   providers: [
-  { provide: 'APP_GUARD', useClass: ThrottlerGuard },
-  // { provide: 'APP_GUARD', useClass: JwtAuthGuard },
-  // { provide: 'APP_GUARD', useClass: RolesGuard },
-],
+    { provide: 'APP_GUARD', useClass: ThrottlerGuard },
+    { provide: 'APP_GUARD', useClass: JwtAuthGuard },
+  ],
 })
 export class AppModule {}
