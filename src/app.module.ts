@@ -7,6 +7,9 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { SupabaseModule } from './modules/supabase/supabase.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RutasModule } from './modules/rutas/rutas.module';
+import { ViajesModule } from './modules/viajes/viajes.module';
+import { PuntosRutaModule } from './modules/puntos_ruta/puntos_ruta.module';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     JwtModule.register({global: true}),
     AuthModule,
     UsersModule,
+    RutasModule,
+    ViajesModule,
+    PuntosRutaModule,
   ],
   
   providers: [

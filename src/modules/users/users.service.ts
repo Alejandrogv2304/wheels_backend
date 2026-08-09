@@ -19,6 +19,10 @@ export class UsersService {
     const profile = this.usersRepository.create({
       id: supabaseUser.id,
       correo: supabaseUser.email,
+      telefono:
+        (supabaseUser.user_metadata?.phone as string | undefined) ??
+        (supabaseUser.user_metadata?.telefono as string | undefined) ??
+        undefined,
       nombre:
         (supabaseUser.user_metadata?.name as string | undefined) ??
         (supabaseUser.user_metadata?.full_name as string | undefined) ??

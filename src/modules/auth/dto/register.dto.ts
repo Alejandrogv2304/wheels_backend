@@ -1,4 +1,11 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RegisterDto {
@@ -13,6 +20,16 @@ export class RegisterDto {
   @MinLength(8, {message:'La contraseña debe tener al menos 8 caracteres'})
   password!: string;
 
+  @ApiProperty({example:'3147185092'})
+  @IsString({message:'El telefono debe ser un string'})
+  @IsNotEmpty({message:'El telefono es obligatorio'})
+  @Matches(/^(\+57)?3\d{9}$/, {
+    message:
+      'El telefono debe ser un celular colombiano válido, por ejemplo 3147185092 o +573147185092',
+  })
+  telefono!: string;
+
+  @ApiProperty({example:'Alejandro Gomez'})
   @IsOptional()
   @IsString()
   name?: string;
