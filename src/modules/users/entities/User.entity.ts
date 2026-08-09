@@ -1,4 +1,6 @@
-import { Column, CreateDateColumn, Entity, PrimaryColumn } from 'typeorm';
+import { Ruta } from 'src/modules/rutas/entities/rutas.entity';
+import { Viaje } from 'src/modules/viajes/entities/viajes.entity';
+import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn } from 'typeorm';
 
 export enum EstadoUsuarioEnum {
   ACTIVO = 'activo',
@@ -79,4 +81,11 @@ export class User {
     type: 'timestamp',
   })
   fechaCreacion!: Date;
+
+
+  @OneToMany(() => Ruta, (ruta) => ruta.creador)
+   rutasCreadas!: Ruta[];
+
+  @OneToMany(() => Viaje, (viaje) => viaje.conductor)
+   viajesConductor!: Viaje[];
 }
