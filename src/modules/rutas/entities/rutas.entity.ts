@@ -39,6 +39,12 @@ export class Ruta {
   nombre!: string;
 
   @Column({
+    type: 'boolean',
+    default: false,
+  })
+  favorita!: boolean;
+
+  @Column({
     type: 'enum',
     enum: EstadoRuta,
     enumName: 'estado_ruta_enum',
