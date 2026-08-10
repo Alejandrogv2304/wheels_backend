@@ -1,14 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Ruta } from './entities/rutas.entity';
 import { CrearRutaDto } from './dto/crear-ruta.dto';
 import { PuntosRutaService } from '../puntos_ruta/puntos_ruta.service';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class RutasService {
   constructor(
     private readonly dataSource: DataSource,
     private readonly puntosRutaService: PuntosRutaService,
+
+     @InjectRepository(Ruta)
+    private readonly rutasRepository: Repository<Ruta>,
   ) {}
 
   private validarOrdenUnico(puntos: CrearRutaDto['puntos']): void {
@@ -53,4 +57,59 @@ export class RutasService {
       };
     });
   }
+
+
+
+  async obtenerTodasLasRutas(creadorId: string): Promise<Ruta[]> {
+
+    const rutas = await this.rutasRepository.find({
+          select: {
+        id: true,
+        nombre: true,
+        favorita: true,
+        // puntos: {
+        //   id: true,
+        //   direccion: true, 
+        //   orden: true,
+        //   latitud: true,
+        //   longitud: true,
+        //   nombre: true,
+        // },
+      },
+      // relations: {
+      //   puntos: true, 
+      // },
+      // order: {
+      //   puntos: {
+      //     orden: 'ASC',
+      //   },
+      // },
+      where: {
+        creadorId,
+      }
+        });
+    
+
+    return rutas;
+  }
+
+  async obtenerRutaPorId(rutaId: string, creadorId: string): Promise<Ruta | null> {
+    const ruta = await this.rutasRepository.findOne({
+      where: {
+        id: rutaId,
+        creadorId,
+      },
+      relations: {
+        puntos: true,
+      },
+      order: {
+        puntos: {
+          orden: 'ASC',
+        },
+      },
+    });
+
+    return ruta;
+  }
+  
 }
