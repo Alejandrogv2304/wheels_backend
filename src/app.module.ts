@@ -10,6 +10,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RutasModule } from './modules/rutas/rutas.module';
 import { ViajesModule } from './modules/viajes/viajes.module';
 import { PuntosRutaModule } from './modules/puntos_ruta/puntos_ruta.module';
+import { VehiculoModule } from './modules/vehiculo/vehiculo.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { PuntosRutaModule } from './modules/puntos_ruta/puntos_ruta.module';
     RutasModule,
     ViajesModule,
     PuntosRutaModule,
+    VehiculoModule,
   ],
   
   providers: [

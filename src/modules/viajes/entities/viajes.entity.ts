@@ -11,9 +11,15 @@ import {
 } from 'typeorm';
 
 import { User } from '../../users/entities/User.entity';
-import { Vehiculo } from '../../vehiculos/entities/vehiculo.entity';
+import { Vehiculo } from '../../vehiculo/entities/vehiculo.entity';
 import { Ruta } from '../../rutas/entities/rutas.entity';
-import { EstadoViaje } from '../enums/estado-viaje.enum';
+
+
+export enum EstadoViaje {
+  ACTIVO = 'activo',
+  CANCELADO = 'cancelado',
+  TERMINADO = 'terminado',
+}
 
 @Entity('viajes')
 @Check('viajes_cupos_totales_check', '"cupos" > 0')
@@ -74,7 +80,7 @@ export class Viaje {
     enumName: 'estado_viaje_enum',
     default: EstadoViaje.ACTIVO,
   })
-  estado: EstadoViaje;
+  estado!: EstadoViaje;
 
   @CreateDateColumn({
     name: 'fecha_creacion',
@@ -106,7 +112,7 @@ export class Viaje {
     name: 'vehiculo_id',
     foreignKeyConstraintName: 'fk_viaje_vehiculo',
   })
-  vehiculo: Vehiculo;
+  vehiculo!: Vehiculo;
 
   @ManyToOne(() => Ruta, (ruta) => ruta.viajes, {
     onDelete: 'RESTRICT',

@@ -12,7 +12,12 @@ import {
 import { User } from '../../users/entities/User.entity';
 import { PuntoRuta } from '../../puntos_ruta/entities/punto-ruta.entity';
 import { Viaje } from '../../viajes/entities/viajes.entity';
-import { EstadoRuta } from '../enums/estado-ruta.enum';
+
+
+export enum EstadoRuta {
+  ACTIVA = 'activa',
+  INACTIVA = 'inactiva',
+}
 
 @Entity('rutas')
 @Index('idx_rutas_creador', ['creadorId'])
@@ -39,7 +44,7 @@ export class Ruta {
     enumName: 'estado_ruta_enum',
     default: EstadoRuta.ACTIVA,
   })
-  estado: EstadoRuta;
+  estado!: EstadoRuta;
 
   @DeleteDateColumn({
     name: 'fecha_eliminacion',
