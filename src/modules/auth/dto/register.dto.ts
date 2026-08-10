@@ -27,7 +27,7 @@ export class RegisterDto {
     message:
       'El telefono debe ser un celular colombiano válido, por ejemplo 3147185092 o +573147185092',
   })
-  telefono!: string;
+  phone!: string;
 
   @ApiProperty({example:'Alejandro Gomez'})
   @IsOptional()
