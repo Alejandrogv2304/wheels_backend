@@ -1,9 +1,14 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, Repository } from 'typeorm';
 import { Ruta } from './entities/rutas.entity';
 import { CrearRutaDto } from './dto/crear-ruta.dto';
 import { PuntosRutaService } from '../puntos_ruta/puntos_ruta.service';
 import { InjectRepository } from '@nestjs/typeorm';
+import { ActualizarRutaDto } from './dto/actualizar-ruta.dto';
 
 @Injectable()
 export class RutasService {
@@ -111,5 +116,32 @@ export class RutasService {
 
     return ruta;
   }
-  
+
+  async actualizarRuta(
+    dto: ActualizarRutaDto,
+    id: string,
+    creadorId: string,
+  ): Promise<Ruta> {
+    if (dto.nombre === undefined && dto.favorita === undefined) {
+      throw new BadRequestException(
+        'Debes enviar al menos un campo para actualizar',
+      );
+    }
+
+    const ruta = await this.rutasRepository.findOneBy({ id, creadorId });
+
+    if (!ruta) {
+      throw new NotFoundException('La ruta no existe');
+    }
+
+    if (dto.nombre !== undefined) {
+      ruta.nombre = dto.nombre.trim();
+    }
+
+    if (dto.favorita !== undefined) {
+      ruta.favorita = dto.favorita;
+    }
+
+    return this.rutasRepository.save(ruta);
+  }
 }

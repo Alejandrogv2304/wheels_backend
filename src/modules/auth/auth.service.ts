@@ -59,7 +59,7 @@ export class AuthService {
       options: {
         data: {
           name: dto.name,
-          phone: dto.telefono,
+          phone: dto.phone,
         },
       },
     });
