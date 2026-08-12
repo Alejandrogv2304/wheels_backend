@@ -38,7 +38,7 @@ export class Vehiculo {
     type: 'varchar',
     length: 100,
   })
-  modelo!: string;
+  referencia!: string;
 
   @Column({
     type: 'varchar',

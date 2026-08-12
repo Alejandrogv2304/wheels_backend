@@ -13,7 +13,7 @@ export enum TipoVehiculo {
 }
 
 @Entity('catalogo_vehiculos')
-@Unique('UQ_catalogo_vehiculo_marca_modelo', ['marca', 'modelo'])
+@Unique('UQ_catalogo_vehiculo_marca_modelo', ['marca', 'referencia'])
 export class CatalogoVehiculo {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -28,7 +28,7 @@ export class CatalogoVehiculo {
     type: 'varchar',
     length: 100,
   })
-  modelo!: string;
+  referencia!: string;
 
   @Column({
     type: 'enum',
