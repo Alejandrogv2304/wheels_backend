@@ -1,11 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsArray,
   IsOptional,
   IsString,
+  ValidateNested,
   MinLength,
 } from 'class-validator';
+import { ActualizarPuntoRutaDto } from './actualizar-punto-ruta.dto';
 
 export class ActualizarRutaDto {
   @ApiProperty({ example: 'Bucaramanga - UIS', required: false })
@@ -23,4 +26,10 @@ export class ActualizarRutaDto {
   @IsOptional()
   @IsBoolean({ message: 'favorita debe ser un valor booleano' })
   favorita?: boolean;
+
+  @ApiProperty({ type: [ActualizarPuntoRutaDto] })
+  @IsArray({ message: 'puntos debe ser un arreglo' })
+  @ValidateNested({ each: true })
+  @Type(() => ActualizarPuntoRutaDto)
+  puntos!: ActualizarPuntoRutaDto[];
 }

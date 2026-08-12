@@ -24,6 +24,16 @@ export class PuntosRutaService {
     return this.crearPuntosSecuenciales(puntoRepository, rutaId, puntos);
   }
 
+  private normalizarCoordenada(
+    valor: number | null | undefined,
+  ): string | null {
+    if (valor === null || valor === undefined) {
+      return null;
+    }
+
+    return valor.toString();
+  }
+
   private async crearPuntosSecuenciales(
     puntoRepository: Repository<PuntoRuta>,
     rutaId: string,
@@ -37,8 +47,8 @@ export class PuntosRutaService {
           rutaId,
           nombre: punto.nombre.trim(),
           direccion: punto.direccion?.trim() ?? null,
-          latitud: punto.latitud.toString(),
-          longitud: punto.longitud.toString(),
+          latitud: this.normalizarCoordenada(punto.latitud),
+          longitud: this.normalizarCoordenada(punto.longitud),
           orden: punto.orden,
         });
 
