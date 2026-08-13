@@ -45,7 +45,7 @@ export class AuthService {
     await this.usersService.upsertFromSupabaseUser(data.user);
 
     return {
-      message: 'Usuario registrado correctamente',
+      message: 'Revisa tu correo para confirmar tu cuenta',
       requiresEmailConfirmation: !data.session,
       userId: data.user.id,
       email: data.user.email,
@@ -59,6 +59,22 @@ export class AuthService {
     });
 
     if (error) {
+      const errorMessage =
+        error instanceof Error ? error.message.toLowerCase() : '';
+
+      if (
+        errorMessage.includes('email not confirmed') ||
+        errorMessage.includes('email is not confirmed') ||
+        errorMessage.includes('not confirmed')
+      ) {
+        this.logger.warn(
+          `Inicio de sesión bloqueado porque el correo no esta confirmado para ${dto.email}`,
+        );
+        throw new UnauthorizedException(
+          'Debes confirmar tu correo antes de iniciar sesión',
+        );
+      }
+
       this.logger.warn('Inicio de sesión fallido');
       throw new UnauthorizedException('Credenciales inválidas');
     }
