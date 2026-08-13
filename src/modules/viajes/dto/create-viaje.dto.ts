@@ -1,26 +1,69 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
-  ArrayMinSize,
-  IsArray,
-  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
-  MinLength,
-  ValidateNested,
+  IsUUID,
+  Max,
+  Min,
+  IsDateString,
 } from 'class-validator';
 
+export class CreateViajeDto {
 
-export class CrearViajeDto {
-  @ApiProperty({ example: 'Bucaramanga - UIS' })
-  @IsString({ message: 'El nombre de la ruta debe ser un texto' })
-  @MinLength(3, { message: 'El nombre de la ruta debe tener al menos 3 caracteres' })
-  nombre!: string;
+  @ApiProperty({ example: 'uuid-del-vehiculo' })
+  @IsUUID()
+  @IsNotEmpty({message: 'El ID del vehiculo es obligatorio'})
+  vehiculoId!: string;
 
-  @ApiProperty({ example: false, required: false, default: false })
+  @ApiProperty({ example: 'uuid-de-la-ruta' })
+  @IsUUID()
+  @IsNotEmpty({message: 'El ID de la ruta es obligatorio'})
+  rutaId!: string;
+
+  @ApiProperty({ example: 3500 })
+  @IsNumber(
+    {
+      maxDecimalPlaces: 2,
+    },
+    {
+      message: 'El precio debe ser un número válido',
+    },
+  )
+  @Min(3000, {
+    message: 'El precio mínimo permitido es 3000',
+  })
+  @Max(30000, {
+    message: 'El precio máximo permitido es 30000',
+  })
+  precio!: number;
+
+  @ApiProperty({ example: 4 })
+  @IsInt({
+    message: 'Los cupos deben ser un número entero',
+  })
+  @Min(1, {
+    message: 'Debe existir al menos un cupo',
+  })
+  @Max(7, {
+    message: 'El máximo de cupos permitidos es 7',
+  })
+  cupos!: number;
+
+  @IsDateString(
+    {},
+    {
+      message: 'La fecha de salida debe tener un formato ISO 8601 válido',
+    },
+  )
+  fechaSalida!: string;
+
+  @ApiProperty({ example: 'El viaje saldra desde la rotonda de San Francisco' })
   @IsOptional()
-  @IsBoolean({ message: 'favorita debe ser un valor booleano' })
-  favorita?: boolean = false;
-
- 
+  @IsString({
+    message: 'Las observaciones deben ser una cadena de texto',
+  })
+  observaciones?: string;
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { VehiculoService } from './vehiculo.service';
 import { CrearVehiculoDto } from './dto/crear-vehiculo.dto';
@@ -19,5 +19,11 @@ export class VehiculoController {
       @CurrentUser() user: AuthenticatedUser,
     ) {
       return this.vehiculoService.crearVehiculo(crearVehiculoDto, user.id);
+    }
+
+    @ApiOperation({ summary: 'Obtener vehículos por usuario' })
+    @Get('')
+    obtenerVehiculosPorUsuario(@CurrentUser() user: AuthenticatedUser) {
+      return this.vehiculoService.obtenerVehiculosPorUsuario(user.id);
     }
 }
