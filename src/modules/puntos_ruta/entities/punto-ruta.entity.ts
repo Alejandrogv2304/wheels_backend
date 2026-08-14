@@ -40,15 +40,17 @@ export class PuntoRuta {
     type: 'numeric',
     precision: 10,
     scale: 8,
+    nullable: true,
   })
-  latitud!: string;
+  latitud!: string | null;
 
   @Column({
     type: 'numeric',
     precision: 11,
     scale: 8,
+    nullable: true,
   })
-  longitud!: string;
+  longitud!: string | null;
 
   @Column({
     type: 'int',

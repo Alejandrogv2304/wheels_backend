@@ -16,24 +16,47 @@ export class UsersService {
       throw new BadRequestException('El usuario de Supabase no tiene email');
     }
 
+    const existingUser = await this.usersRepository.findOneBy({
+      id: supabaseUser.id,
+    });
+
+    const nombre = this.pickSupabaseString(
+      supabaseUser.user_metadata?.name,
+      supabaseUser.user_metadata?.full_name,
+      supabaseUser.user_metadata?.username,
+    );
+    const foto = this.pickSupabaseString(
+      supabaseUser.user_metadata?.avatar_url,
+      supabaseUser.user_metadata?.picture,
+    );
+    const telefono = this.pickSupabaseString(
+      supabaseUser.user_metadata?.phone,
+      supabaseUser.user_metadata?.telefono,
+    );
+
     const profile = this.usersRepository.create({
+      ...(existingUser ?? {}),
       id: supabaseUser.id,
       correo: supabaseUser.email,
-      telefono:
-        (supabaseUser.user_metadata?.phone as string | undefined) ??
-        (supabaseUser.user_metadata?.telefono as string | undefined) ??
-        undefined,
-      nombre:
-        (supabaseUser.user_metadata?.name as string | undefined) ??
-        (supabaseUser.user_metadata?.full_name as string | undefined) ??
-        (supabaseUser.user_metadata?.username as string | undefined) ??
-        undefined,
-      foto:
-        (supabaseUser.user_metadata?.avatar_url as string | undefined) ??
-        undefined,
+      telefono: telefono ?? existingUser?.telefono ?? undefined,
+      nombre: nombre ?? existingUser?.nombre ?? undefined,
+      foto: foto ?? existingUser?.foto ?? undefined,
     });
 
     return this.usersRepository.save(profile);
+  }
+
+  private pickSupabaseString(...values: Array<unknown>): string | undefined {
+    for (const value of values) {
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (trimmed) {
+          return trimmed;
+        }
+      }
+    }
+
+    return undefined;
   }
 
   findById(id: string): Promise<User | null> {

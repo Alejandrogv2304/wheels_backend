@@ -11,6 +11,7 @@ import { RutasModule } from './modules/rutas/rutas.module';
 import { ViajesModule } from './modules/viajes/viajes.module';
 import { PuntosRutaModule } from './modules/puntos_ruta/puntos_ruta.module';
 import { VehiculoModule } from './modules/vehiculo/vehiculo.module';
+import { CatalogoVehiculosModule } from './modules/catalogo-vehiculos/catalogo-vehiculos.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { VehiculoModule } from './modules/vehiculo/vehiculo.module';
     ViajesModule,
     PuntosRutaModule,
     VehiculoModule,
+    CatalogoVehiculosModule,
   ],
   
   providers: [

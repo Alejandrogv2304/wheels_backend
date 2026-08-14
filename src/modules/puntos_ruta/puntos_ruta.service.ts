@@ -1,11 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
-import { EntityManager } from 'typeorm';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { DataSource, EntityManager } from 'typeorm';
 import { Repository } from 'typeorm';
 import { PuntoRuta } from './entities/punto-ruta.entity';
 import { CrearPuntoRutaDto } from '../rutas/dto/crear-punto-ruta.dto';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class PuntosRutaService {
+
+  constructor(
+      private readonly dataSource: DataSource,
+  
+       @InjectRepository(PuntoRuta)
+      private readonly puntosRutaRepository: Repository<PuntoRuta>,
+    ) {}
   crearPuntosParaRuta(
     manager: EntityManager,
     rutaId: string,
@@ -14,6 +22,16 @@ export class PuntosRutaService {
     const puntoRepository = manager.getRepository(PuntoRuta);
 
     return this.crearPuntosSecuenciales(puntoRepository, rutaId, puntos);
+  }
+
+  private normalizarCoordenada(
+    valor: number | null | undefined,
+  ): string | null {
+    if (valor === null || valor === undefined) {
+      return null;
+    }
+
+    return valor.toString();
   }
 
   private async crearPuntosSecuenciales(
@@ -29,8 +47,8 @@ export class PuntosRutaService {
           rutaId,
           nombre: punto.nombre.trim(),
           direccion: punto.direccion?.trim() ?? null,
-          latitud: punto.latitud.toString(),
-          longitud: punto.longitud.toString(),
+          latitud: this.normalizarCoordenada(punto.latitud),
+          longitud: this.normalizarCoordenada(punto.longitud),
           orden: punto.orden,
         });
 
@@ -49,5 +67,27 @@ export class PuntosRutaService {
     }
 
     return puntosGuardados;
+  }
+
+  async eliminarPuntoRuta(id: string, creadorId: string) {
+  const punto = await this.puntosRutaRepository.findOne(
+    { where: { id },
+    relations: {
+      ruta: true
+    }
+   }
+  );
+
+  if(!punto) {
+    throw new NotFoundException('Punto de ruta no encontrado');
+  }
+
+  if(punto?.ruta.creadorId !== creadorId) {
+    throw new ForbiddenException('No tienes permisos para eliminar este punto de ruta');
+  }
+
+  await this.puntosRutaRepository.softDelete(id);
+
+  return { message: 'Punto de ruta eliminado correctamente' };
   }
 }

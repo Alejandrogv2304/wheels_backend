@@ -38,7 +38,7 @@ export class JwtAuthGuard implements CanActivate {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL');
 
     if (!supabaseUrl) {
-      throw new Error('Falta la variable de entorno SUPABASE_URL');
+      throw new Error('Falta la configuración de autenticación');
     }
 
     this.issuer = `${supabaseUrl.replace(/\/$/, '')}/auth/v1`;
@@ -61,13 +61,13 @@ export class JwtAuthGuard implements CanActivate {
     const authHeader = request.headers.authorization;
 
     if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Falta el token Bearer de Supabase');
+      throw new UnauthorizedException('Falta el token de acceso');
     }
 
     const accessToken = authHeader.slice(7).trim();
 
     if (!accessToken) {
-      throw new UnauthorizedException('Falta el token Bearer de Supabase');
+      throw new UnauthorizedException('Falta el token de acceso');
     }
 
     const verifiedToken = await this.verifyToken(accessToken);
@@ -88,7 +88,7 @@ export class JwtAuthGuard implements CanActivate {
         issuer: this.issuer,
       });
     } catch {
-      throw new UnauthorizedException('JWT inválido o expirado');
+      throw new UnauthorizedException('Token inválido o expirado');
     }
   }
 
@@ -97,7 +97,7 @@ export class JwtAuthGuard implements CanActivate {
     payload: SupabaseJwtPayload,
   ): AuthenticatedUser {
     if (!payload.sub) {
-      throw new UnauthorizedException('JWT inválido o expirado');
+      throw new UnauthorizedException('Token inválido o expirado');
     }
 
     return {

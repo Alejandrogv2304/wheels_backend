@@ -21,37 +21,6 @@ export class AuthService {
     private readonly usersService: UsersService,
   ) {}
 
-  private getSupabaseErrorMessage(error: unknown, fallback: string): string {
-    if (!error) {
-      return fallback;
-    }
-
-    if (typeof error === 'string') {
-      return error;
-    }
-
-    if (error instanceof Error) {
-      return error.message || fallback;
-    }
-
-    if (typeof error === 'object') {
-      const typedError = error as Record<string, unknown>;
-
-      if (typeof typedError.message === 'string' && typedError.message.trim()) {
-        return typedError.message;
-      }
-
-      try {
-        const serialized = JSON.stringify(typedError);
-        return serialized && serialized !== '{}' ? serialized : fallback;
-      } catch {
-        return fallback;
-      }
-    }
-
-    return fallback;
-  }
-
   async register(dto: RegisterDto) {
     const { data, error } = await this.supabase.auth.signUp({
       email: dto.email,
@@ -65,22 +34,18 @@ export class AuthService {
     });
 
     if (error) {
-      const message = this.getSupabaseErrorMessage(
-        error,
-        'No se pudo registrar el usuario',
-      );
-      this.logger.warn(`register failed: ${message}`);
-      throw new BadRequestException(message);
+      this.logger.warn('Registro fallido');
+      throw new BadRequestException('No se pudo completar el registro');
     }
 
     if (!data.user) {
-      throw new BadRequestException('No se pudo crear el usuario en Supabase');
+      throw new BadRequestException('No se pudo completar el registro');
     }
 
-    const profile = await this.usersService.upsertFromSupabaseUser(data.user);
+    await this.usersService.upsertFromSupabaseUser(data.user);
 
     return {
-      message: 'Usuario registrado correctamente',
+      message: 'Revisa tu correo para confirmar tu cuenta',
       requiresEmailConfirmation: !data.session,
       userId: data.user.id,
       email: data.user.email,
@@ -94,12 +59,24 @@ export class AuthService {
     });
 
     if (error) {
-      const message = this.getSupabaseErrorMessage(
-        error,
-        'No se pudo iniciar sesión',
-      );
-      this.logger.warn(`login failed: ${message}`);
-      throw new UnauthorizedException(message);
+      const errorMessage =
+        error instanceof Error ? error.message.toLowerCase() : '';
+
+      if (
+        errorMessage.includes('email not confirmed') ||
+        errorMessage.includes('email is not confirmed') ||
+        errorMessage.includes('not confirmed')
+      ) {
+        this.logger.warn(
+          `Inicio de sesión bloqueado porque el correo no esta confirmado para ${dto.email}`,
+        );
+        throw new UnauthorizedException(
+          'Debes confirmar tu correo antes de iniciar sesión',
+        );
+      }
+
+      this.logger.warn('Inicio de sesión fallido');
+      throw new UnauthorizedException('Credenciales inválidas');
     }
 
     if (!data.user) {
@@ -109,7 +86,7 @@ export class AuthService {
     const profile = await this.usersService.upsertFromSupabaseUser(data.user);
 
     return {
-      message: 'Login exitoso',
+      message: 'Inicio de sesión exitoso',
       profile,
       session: data.session
         ? {
@@ -133,12 +110,10 @@ export class AuthService {
     });
 
     if (error) {
-      const message = this.getSupabaseErrorMessage(
-        error,
+      this.logger.warn('Autenticación con Google fallida');
+      throw new BadRequestException(
         'No se pudo generar la URL de autenticación con Google',
       );
-      this.logger.warn(`google auth failed: ${message}`);
-      throw new BadRequestException(message);
     }
 
     if (!data.url) {
@@ -148,7 +123,7 @@ export class AuthService {
     }
 
     return {
-      message: 'URL de Google Auth generada correctamente',
+      message: 'URL de autenticación con Google generada correctamente',
       url: data.url,
     };
   }
