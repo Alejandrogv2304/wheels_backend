@@ -93,7 +93,7 @@ export class VehiculoService {
     }
 
     async obtenerVehiculosPorUsuario(usuarioId: string): Promise<Vehiculo[]> {
-    const rutas = await this.vehiculoRepository.find({
+    const vehiculos = await this.vehiculoRepository.find({
           select: {
         id: true,
         marca: true,
@@ -101,12 +101,13 @@ export class VehiculoService {
         tipo: true,
         color: true,
         capacidad: true,
+        placa:true
       },  
       where: {
         usuarioId,
       }
         });
     
-    return rutas;
+    return vehiculos;
   }
 }
