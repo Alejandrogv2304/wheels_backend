@@ -1,0 +1,10 @@
+services:
+  wheels-backend:
+    build: .
+    image: wheels-backend
+    container_name: wheels-backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
