@@ -9,6 +9,7 @@ import {
   Max,
   Min,
   IsDateString,
+  MaxLength,
 } from 'class-validator';
 
 export class CreateViajeDto {
@@ -52,6 +53,7 @@ export class CreateViajeDto {
   })
   cupos!: number;
 
+  @ApiProperty({ example: '2026-08-19T15:30:00-05:00' })
   @IsDateString(
     {},
     {
@@ -62,6 +64,7 @@ export class CreateViajeDto {
 
   @ApiProperty({ example: 'El viaje saldra desde la rotonda de San Francisco' })
   @IsOptional()
+  @MaxLength(300, { message: 'Las observaciones son demasiado largas' })
   @IsString({
     message: 'Las observaciones deben ser una cadena de texto',
   })

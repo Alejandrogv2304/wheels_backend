@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
@@ -74,7 +75,7 @@ export class VehiculoService {
             fechaCreacion: vehiculoGuardado.fechaCreacion,
         };
 
-        } catch (error) {
+    } catch (error) {
           const mensaje =
             error instanceof Error && error.message
               ? error.message
@@ -85,11 +86,42 @@ export class VehiculoService {
             error instanceof Error ? error.stack : undefined,
           );
 
-          throw new BadRequestException(
-            `No se pudo crear el vehiculo`,
-          );
-        }
+      throw new BadRequestException(
+        `No se pudo crear el vehiculo`,
+      );
+    }
 
+    }
+
+    async validarVehiculoPerteneceAConductor(
+      vehiculoId: string,
+      conductorId: string,
+    ): Promise<Vehiculo> {
+      const vehiculo = await this.vehiculoRepository.findOne({
+        where: {
+          id: vehiculoId,
+          usuarioId: conductorId,
+        },
+      });
+
+      if (vehiculo) {
+        return vehiculo;
+      }
+
+      const vehiculoExistente = await this.vehiculoRepository.findOne({
+        where: {
+          id: vehiculoId,
+        },
+        withDeleted: true,
+      });
+
+      if (!vehiculoExistente || vehiculoExistente.fechaEliminacion) {
+        throw new NotFoundException('El vehiculo no existe o no esta disponible');
+      }
+
+      throw new ForbiddenException(
+        'El vehiculo no pertenece al conductor',
+      );
     }
 
     async obtenerVehiculosPorUsuario(usuarioId: string): Promise<Vehiculo[]> {

@@ -178,6 +178,35 @@ export class RutasService {
     return ruta;
   }
 
+  async validarRutaPerteneceAConductor(
+    rutaId: string,
+    conductorId: string,
+  ): Promise<Ruta> {
+    const ruta = await this.rutasRepository.findOne({
+      where: {
+        id: rutaId,
+        creadorId: conductorId,
+      },
+    });
+
+    if (ruta) {
+      return ruta;
+    }
+
+    const rutaExistente = await this.rutasRepository.findOne({
+      where: {
+        id: rutaId,
+      },
+      withDeleted: true,
+    });
+
+    if (!rutaExistente || rutaExistente.fechaEliminacion) {
+      throw new NotFoundException('La ruta no existe o no esta disponible');
+    }
+
+    throw new ForbiddenException('La ruta no pertenece al conductor');
+  }
+
   //La logica del metodo con los puntos es: Si el punto viene con id ya existia, solo valida si cambio algo
   //Si un punto viene sin id es un punto nuevo, entonces se crea, si un punto que existia no viene se elimina.
   async actualizarRuta(
