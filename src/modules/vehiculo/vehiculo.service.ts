@@ -1,16 +1,18 @@
 import {
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Vehiculo } from './entities/vehiculo.entity';
+import { TipoVehiculo, Vehiculo } from './entities/vehiculo.entity';
 import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { CrearVehiculoDto } from './dto/crear-vehiculo.dto';
 import { VehiculoResponse } from './types/respuesta-vehiculo';
+import { Viaje } from '../viajes/entities/viajes.entity';
 
 
 @Injectable()
@@ -20,6 +22,8 @@ export class VehiculoService {
     constructor(
         @InjectRepository(Vehiculo)
         private readonly vehiculoRepository: Repository<Vehiculo>,
+        @InjectRepository(Viaje)
+        private readonly viajeRepository: Repository<Viaje>,
         private readonly usersService: UsersService,
     ){}
 
@@ -40,6 +44,13 @@ export class VehiculoService {
         const vehiculoExistente = await this.vehiculoRepository.findOneBy({
           placa: dto.placa,
         });
+
+        if(dto.tipo === TipoVehiculo.MOTO && dto.capacidad > 2){
+          this.logger.warn(
+            `Intento de crear moto con capacidad mayor a 2 para usuario ${usuarioId}`,
+          );
+          throw new BadRequestException('La capacidad de una moto no puede ser mayor a 2');
+        }
 
         if (vehiculoExistente) {
           this.logger.warn(
@@ -142,4 +153,69 @@ export class VehiculoService {
     
     return vehiculos;
   }
+
+ async eliminarVehiculo(
+    vehiculoId: string,
+    usuarioId: string,
+  ): Promise<{ message: string }> {
+    this.logger.log(
+      `Solicitud de eliminacion de vehiculo ${vehiculoId} recibida para usuario ${usuarioId}`,
+    );
+
+    const vehiculo = await this.vehiculoRepository.findOne({
+      where: {
+        id: vehiculoId,
+        usuarioId,
+      },
+    });
+
+    if (!vehiculo) {
+      throw new NotFoundException('El vehiculo no existe o no pertenece al usuario');
+    }
+
+    const viajesAsociados = await this.viajeRepository.count({
+      where: {
+        vehiculoId,
+      },
+    });
+
+    if (viajesAsociados > 0) {
+      this.logger.warn(
+        `No se puede eliminar el vehiculo ${vehiculoId} porque tiene ${viajesAsociados} viaje(s) asociado(s)`,
+      );
+
+      throw new ConflictException(
+        'El vehiculo tiene viajes asociados y no puede eliminarse.',
+      );
+    }
+
+    await this.vehiculoRepository.softDelete(vehiculoId);
+
+    this.logger.log(`Vehiculo ${vehiculoId} eliminado logicamente para usuario ${usuarioId}`);
+
+    return {
+      message: 'Vehiculo eliminado con exito',
+    };
+  }
+
+   async validarCapacidadVehiculoParaViaje(
+      vehiculoId: string,
+      conductorId: string,
+      cuposSolicitados: number,
+    ): Promise<Vehiculo> {
+      const vehiculo = await this.validarVehiculoPerteneceAConductor(
+        vehiculoId,
+        conductorId,
+      );
+
+      const cuposDisponibles = vehiculo.capacidad - 1; 
+
+      if (cuposSolicitados > cuposDisponibles) {
+        throw new BadRequestException(
+          'Los cupos solicitados no pueden exceder la capacidad del vehiculo',
+        );
+      }
+
+      return vehiculo;
+    }
 }

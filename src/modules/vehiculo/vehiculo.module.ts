@@ -4,9 +4,10 @@ import { VehiculoController } from './vehiculo.controller';
 import { Vehiculo } from './entities/vehiculo.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from '../users/users.module';
+import { Viaje } from '../viajes/entities/viajes.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Vehiculo]),
+  imports: [TypeOrmModule.forFeature([Vehiculo, Viaje]),
  UsersModule],
   providers: [VehiculoService],
   controllers: [VehiculoController],

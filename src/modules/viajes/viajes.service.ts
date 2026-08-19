@@ -50,9 +50,10 @@ export class ViajesService {
             );
           }
 
-          await this.vehiculoService.validarVehiculoPerteneceAConductor(
+          await this.vehiculoService.validarCapacidadVehiculoParaViaje(
             dto.vehiculoId,
             conductorId,
+            dto.cupos,
           );
 
           await this.rutasService.validarRutaPerteneceAConductor(
@@ -105,6 +106,7 @@ export class ViajesService {
           }
         }
 
+      //Este endpoint esta pensado para ser el que se use apenas se ingresa a la aplicacion como pasajero. 
       async obtenerTodosLosViajes(
         query: BuscarViajesQueryDto,
       ): Promise<ObtenerViajesResponse> {
@@ -176,6 +178,7 @@ export class ViajesService {
         };
       }
 
+      //Este endpoint esta pensado para usarse en el perfil de un usuario cuando quiera ver todos los viajes que ha hecho
       async obtenerViajePorConductorId(
         conductorId: string,
       ): Promise<ViajeConRutaYPuntos[]> {
@@ -214,7 +217,7 @@ export class ViajesService {
       }
 
 
-
+// Este metodo esta pensado para usarse cuando se le de en obtener mas informacion del viaje en el front
       async obtenerViajePorId(
         viajeId: string,
       ): Promise<ViajeConRutaYPuntosDetallado | null> {

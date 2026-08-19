@@ -26,4 +26,13 @@ export class VehiculoController {
     obtenerVehiculosPorUsuario(@CurrentUser() user: AuthenticatedUser) {
       return this.vehiculoService.obtenerVehiculosPorUsuario(user.id);
     }
+
+    @ApiOperation({ summary: 'Eliminar un vehículo' })
+    @Post(':vehiculoId/eliminar')
+    eliminarVehiculo(
+      @Param('vehiculoId') vehiculoId: string,
+      @CurrentUser() user: AuthenticatedUser,
+    ) {
+      return this.vehiculoService.eliminarVehiculo(vehiculoId, user.id);
+    }
 }
