@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -21,9 +21,15 @@ export class ViajesController {
     return this.viajesService.createViaje(createViajeDto, user.id);
   }
 
+  @ApiOperation({ summary: 'Obtener viaje por id' })
+  @Get(':viajeId')
+  obtenerViajePorId(@Param('viajeId') viajeId: string) {
+    return this.viajesService.obtenerViajePorId(viajeId);
+  }
+
   @ApiOperation({ summary: 'Obtener viajes por conductor' })
   @Get('conductor/:conductorId')
-  obtenerViajesPorConductorId(@Query('conductorId') conductorId: string) {
+  obtenerViajesPorConductorId(@Param('conductorId') conductorId: string) {
     return this.viajesService.obtenerViajePorConductorId(conductorId);
   }
 

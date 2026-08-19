@@ -76,3 +76,37 @@ export type ViajeListado = Pick<
     tipo: TipoVehiculo;
   };
 };
+
+export type ViajeConRutaYPuntosDetallado = Pick<
+  Viaje,
+  | 'id'
+  | 'conductorId'
+  | 'vehiculoId'
+  | 'rutaId'
+  | 'precio'
+  | 'cupos'
+  | 'fechaSalida'
+  | 'observaciones'
+  | 'estado'
+  | 'fechaCreacion'
+> & {
+  ruta: {
+    id: string;
+    nombre: string;
+    favorita: boolean;
+    puntos: Array<{
+      id: string;
+      nombre: string;
+      direccion: string | null;
+      latitud: string | null;
+      longitud: string | null;
+      orden: number;
+    }>;
+  };
+  vehiculo: {
+    id: string;
+    marca: string;
+    referencia: string;
+    tipo: TipoVehiculo;
+  };
+};

@@ -8,6 +8,7 @@ import { RutasService } from '../rutas/rutas.service';
 import { EstadoViaje } from './entities/viajes.entity';
 import { BuscarViajesQueryDto } from './dto/buscar-viajes.query.dto';
 import {
+  ViajeConRutaYPuntosDetallado,
   ViajeResponse,
   type ObtenerViajesResponse,
   type ViajeConRutaYPuntos,
@@ -210,6 +211,84 @@ export class ViajesService {
           .getMany();
 
         return viajes as ViajeConRutaYPuntos[];
+      }
+
+
+
+      async obtenerViajePorId(
+        viajeId: string,
+      ): Promise<ViajeConRutaYPuntosDetallado | null> {
+        const viaje = await this.viajeRepository
+          .createQueryBuilder('viaje')
+          .leftJoinAndSelect('viaje.ruta', 'ruta')
+          .leftJoinAndSelect('ruta.puntos', 'punto', 'punto.fecha_eliminacion IS NULL')
+          .leftJoinAndSelect('viaje.vehiculo', 'vehiculo')
+          .select([
+            'viaje.id',
+            'viaje.conductorId',
+            'viaje.vehiculoId',
+            'viaje.rutaId',
+            'viaje.precio',
+            'viaje.cupos',
+            'viaje.fechaSalida',
+            'viaje.observaciones',
+            'viaje.estado',
+            'viaje.fechaCreacion',
+            'ruta.id',
+            'ruta.nombre',
+            'ruta.favorita',
+            'punto.id',
+            'punto.nombre',
+            'punto.direccion',
+            'punto.latitud',
+            'punto.longitud',
+            'punto.orden',
+            'vehiculo.id',
+            'vehiculo.marca',
+            'vehiculo.referencia',
+            'vehiculo.tipo',
+          ])
+          .where('viaje.id = :viajeId', { viajeId })
+          .andWhere('viaje.fecha_eliminacion IS NULL')
+          .orderBy('viaje.fechaSalida', 'ASC')
+          .addOrderBy('punto.orden', 'ASC')
+          .getOne();
+
+        if (!viaje) {
+          return null;
+        }
+
+        return {
+          id: viaje.id,
+          conductorId: viaje.conductorId,
+          vehiculoId: viaje.vehiculoId,
+          rutaId: viaje.rutaId,
+          precio: viaje.precio,
+          cupos: viaje.cupos,
+          fechaSalida: viaje.fechaSalida,
+          observaciones: viaje.observaciones,
+          estado: viaje.estado,
+          fechaCreacion: viaje.fechaCreacion,
+          ruta: {
+            id: viaje.ruta.id,
+            nombre: viaje.ruta.nombre,
+            favorita: viaje.ruta.favorita,
+            puntos: (viaje.ruta.puntos ?? []).map((punto) => ({
+              id: punto.id,
+              nombre: punto.nombre,
+              direccion: punto.direccion,
+              latitud: punto.latitud,
+              longitud: punto.longitud,
+              orden: punto.orden,
+            })),
+          },
+          vehiculo: {
+            id: viaje.vehiculo.id,
+            marca: viaje.vehiculo.marca,
+            referencia: viaje.vehiculo.referencia,
+            tipo: viaje.vehiculo.tipo,
+          },
+        };
       }
     
 }
