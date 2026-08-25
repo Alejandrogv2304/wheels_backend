@@ -7,12 +7,14 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
 import { User } from '../../users/entities/User.entity';
 import { Vehiculo } from '../../vehiculo/entities/vehiculo.entity';
 import { Ruta } from '../../rutas/entities/rutas.entity';
+import { Reserva } from 'src/modules/reservas/entities/reserva.entity';
 
 
 export enum EstadoViaje {
@@ -22,7 +24,7 @@ export enum EstadoViaje {
 }
 
 @Entity('viajes')
-@Check('viajes_cupos_totales_check', '"cupos" > 0')
+@Check('viajes_cupos_totales_check', '"cupos" >= 0')
 @Check('viajes_precio_check', '"precio" >= 0')
 @Index('idx_viajes_fecha', ['fechaSalida'])
 @Index('idx_viajes_estado', ['estado'])
@@ -122,4 +124,7 @@ export class Viaje {
     foreignKeyConstraintName: 'fk_viaje_ruta',
   })
   ruta!: Ruta;
+
+  @OneToMany(() => Reserva, (reserva) => reserva.viaje)
+  reservas!: Reserva[];
 }

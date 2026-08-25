@@ -1,3 +1,4 @@
+import { Reserva } from 'src/modules/reservas/entities/reserva.entity';
 import { Ruta } from 'src/modules/rutas/entities/rutas.entity';
 import { Viaje } from 'src/modules/viajes/entities/viajes.entity';
 import { Column, CreateDateColumn, Entity, OneToMany, PrimaryColumn } from 'typeorm';
@@ -88,4 +89,7 @@ export class User {
 
   @OneToMany(() => Viaje, (viaje) => viaje.conductor)
    viajesConductor!: Viaje[];
+
+  @OneToMany(() => Reserva, (reserva) => reserva.pasajero)
+   reservas!: Reserva[];
 }
