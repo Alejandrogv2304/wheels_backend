@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
 import { CreateViajeDto } from './dto/create-viaje.dto';
 import { ViajesService } from './viajes.service';
 import { BuscarViajesQueryDto } from './dto/buscar-viajes.query.dto';
+import { ProfileCompletedGuard } from '../../common/guards/profile-completed.guard';
 
 @ApiTags('Viajes')
 @Controller('viajes')
@@ -13,6 +14,7 @@ export class ViajesController {
 
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Crear un viaje' })
+  @UseGuards(ProfileCompletedGuard)
   @Post()
   crearViaje(
     @Body() createViajeDto: CreateViajeDto,
