@@ -17,7 +17,7 @@ export class UsersController {
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Obtener información del usuario actual' })
     me(@CurrentUser() user: AuthenticatedUser) {
-        return user;
+        return this.usersService.getProfile(user.id);
     }
 
     @Patch('me')

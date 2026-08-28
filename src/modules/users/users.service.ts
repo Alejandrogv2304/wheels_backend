@@ -9,6 +9,10 @@ import { Repository } from 'typeorm';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { User } from './entities/User.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import type {
+  UpdateUserProfileResponse,
+  UserMeResponse,
+} from './types/user-response';
 
 @Injectable()
 export class UsersService {
@@ -69,6 +73,16 @@ export class UsersService {
     return this.usersRepository.findOneBy({ id });
   }
 
+  async getProfile(userId: string): Promise<UserMeResponse> {
+    const user = await this.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return this.toUserMeResponse(user);
+  }
+
   async isProfileComplete(userId: string): Promise<boolean> {
     const user = await this.findById(userId);
 
@@ -85,7 +99,10 @@ export class UsersService {
     );
   }
 
-  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<User> {
+  async updateProfile(
+    userId: string,
+    dto: UpdateProfileDto,
+  ): Promise<UpdateUserProfileResponse> {
     const user = await this.findById(userId);
 
     if (!user) {
@@ -107,7 +124,7 @@ export class UsersService {
         throw new NotFoundException('Usuario no encontrado');
       }
 
-      return updatedUser;
+      return this.toUpdateUserProfileResponse(updatedUser);
     } catch (error) {
       if (this.isPostgresUniqueViolation(error)) {
         throw new ConflictException(
@@ -126,5 +143,33 @@ export class UsersService {
       'code' in error &&
       error.code === '23505'
     );
+  }
+
+  private toUserMeResponse(user: User): UserMeResponse {
+    return {
+      id: user.id,
+      nombre: user.nombre ?? null,
+      telefono: user.telefono ?? null,
+      correo: user.correo,
+      estado: user.estado,
+      tipoDocumento: user.tipoDocumento ?? null,
+      numeroDocumento: user.numeroDocumento ?? null,
+      foto: user.foto ?? null,
+    };
+  }
+
+  private toUpdateUserProfileResponse(
+    user: User,
+  ): UpdateUserProfileResponse {
+    return {
+      id: user.id,
+      nombre: user.nombre ?? null,
+      telefono: user.telefono ?? null,
+      correo: user.correo,
+      estado: user.estado,
+      tipoDocumento: user.tipoDocumento ?? null,
+      numeroDocumento: user.numeroDocumento ?? null,
+      foto: user.foto ?? null,
+    };
   }
 }
