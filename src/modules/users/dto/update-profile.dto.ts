@@ -1,7 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
+  Equals,
   IsEnum,
+  IsBoolean,
   IsOptional,
   IsString,
   Matches,
@@ -12,6 +14,9 @@ import { TipoDocumentoEnum } from '../entities/User.entity';
 
 const trimValue = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.trim() : value;
+
+const nullValue = ({ value }: { value: unknown }) =>
+  value === 'null' ? null : value;
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({ example: 'Alejandro Gomez' })
@@ -31,7 +36,10 @@ export class UpdateProfileDto {
   })
   telefono?: string;
 
-  @ApiPropertyOptional({ enum: TipoDocumentoEnum, example: TipoDocumentoEnum.CC })
+  @ApiPropertyOptional({
+    enum: TipoDocumentoEnum,
+    example: TipoDocumentoEnum.CC,
+  })
   @IsOptional()
   @IsEnum(TipoDocumentoEnum, {
     message: 'El tipo de documento no es válido',
@@ -50,10 +58,25 @@ export class UpdateProfileDto {
   })
   numeroDocumento?: string;
 
-  @ApiPropertyOptional({ example: 'https://example.com/foto.jpg' })
+  @ApiPropertyOptional({
+    nullable: true,
+    description:
+      'Enviar null para eliminar la foto actual. No acepta rutas ni URLs.',
+  })
   @IsOptional()
-  @Transform(trimValue)
-  @IsString({ message: 'La foto debe ser un texto' })
-  @MaxLength(500, { message: 'La foto no puede superar 500 caracteres' })
-  foto?: string;
+  @Transform(nullValue)
+  @Equals(null, { message: 'La foto solo puede enviarse como null' })
+  foto?: null;
+
+  @ApiPropertyOptional({
+    example: true,
+    description:
+      'Alternativa para multipart/form-data: true elimina la foto actual.',
+  })
+  @IsOptional()
+  @Transform(
+    ({ value }: { value: unknown }) => value === true || value === 'true',
+  )
+  @IsBoolean({ message: 'eliminarFoto debe ser un booleano' })
+  eliminarFoto?: boolean;
 }
