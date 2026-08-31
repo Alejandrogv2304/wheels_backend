@@ -25,7 +25,7 @@ import type {
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
-  private static readonly MAX_INPUT_FILE_SIZE = 2 * 1024 * 1024;
+  private static readonly MAX_INPUT_FILE_SIZE = 8 * 1024 * 1024;
   private static readonly MAX_INPUT_PIXELS = 16_000_000;
   private static readonly MAX_OUTPUT_FILE_SIZE = 300 * 1024;
   private static readonly OUTPUT_MAX_DIMENSION = 768;
@@ -198,7 +198,7 @@ export class UsersService {
     photoFile: ProfilePhotoFile,
   ): Promise<string> {
     if (photoFile.size > UsersService.MAX_INPUT_FILE_SIZE) {
-      throw new BadRequestException('La foto no puede superar 2 MB');
+      throw new BadRequestException('La foto no puede superar 8 MB');
     }
 
     const expectedFormat = UsersService.allowedMimeTypes.get(
