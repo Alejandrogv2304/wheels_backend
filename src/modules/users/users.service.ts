@@ -375,7 +375,7 @@ export class UsersService {
     };
   }
 
-  private async resolveFotoUrl(foto: string | null): Promise<string | null> {
+  async resolveFotoUrl(foto: string | null): Promise<string | null> {
     if (!foto) {
       return null;
     }
