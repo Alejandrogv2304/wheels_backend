@@ -74,7 +74,7 @@ export class JwtAuthGuard implements CanActivate {
 
     request.user = this.mapPayloadToAuthenticatedUser(
       accessToken,
-      verifiedToken.payload as SupabaseJwtPayload,
+      verifiedToken.payload,
     );
 
     return true;

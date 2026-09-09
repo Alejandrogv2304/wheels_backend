@@ -47,6 +47,8 @@ async function bootstrap() {
   await app.listen(port);
 
   console.log(`Aplicación corriendo en http://localhost:${port}/api/v1`);
-  console.log(`Documentación de la API disponible en http://localhost:${port}/api/docs`);
+  console.log(
+    `Documentación de la API disponible en http://localhost:${port}/api/docs`,
+  );
 }
 bootstrap();

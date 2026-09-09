@@ -19,7 +19,7 @@ export class RutasService {
     private readonly dataSource: DataSource,
     private readonly puntosRutaService: PuntosRutaService,
 
-     @InjectRepository(Ruta)
+    @InjectRepository(Ruta)
     private readonly rutasRepository: Repository<Ruta>,
   ) {}
 
@@ -34,13 +34,9 @@ export class RutasService {
     }
   }
 
-  private validarPuntosActualizacion(
-    puntos: ActualizarPuntoRutaDto[],
-  ): void {
+  private validarPuntosActualizacion(puntos: ActualizarPuntoRutaDto[]): void {
     if (puntos.length < 2) {
-      throw new BadRequestException(
-        'La ruta debe tener minimo dos puntos',
-      );
+      throw new BadRequestException('La ruta debe tener minimo dos puntos');
     }
 
     const ids = puntos.filter((punto) => punto.id).map((punto) => punto.id!);
@@ -95,7 +91,11 @@ export class RutasService {
   async crearRuta(
     dto: CrearRutaDto,
     creadorId: string,
-  ): Promise<Ruta & { puntos: Awaited<ReturnType<PuntosRutaService['crearPuntosParaRuta']>> }> {
+  ): Promise<
+    Ruta & {
+      puntos: Awaited<ReturnType<PuntosRutaService['crearPuntosParaRuta']>>;
+    }
+  > {
     this.validarOrdenUnico(dto.puntos);
 
     return this.dataSource.transaction(async (manager) => {
@@ -124,18 +124,15 @@ export class RutasService {
     });
   }
 
-
-
   async obtenerTodasLasRutas(creadorId: string): Promise<Ruta[]> {
-
     const rutas = await this.rutasRepository.find({
-          select: {
+      select: {
         id: true,
         nombre: true,
         favorita: true,
         // puntos: {
         //   id: true,
-        //   direccion: true, 
+        //   direccion: true,
         //   orden: true,
         //   latitud: true,
         //   longitud: true,
@@ -143,7 +140,7 @@ export class RutasService {
         // },
       },
       // relations: {
-      //   puntos: true, 
+      //   puntos: true,
       // },
       // order: {
       //   puntos: {
@@ -152,14 +149,16 @@ export class RutasService {
       // },
       where: {
         creadorId,
-      }
-        });
-    
+      },
+    });
 
     return rutas;
   }
 
-  async obtenerRutaPorId(rutaId: string, creadorId: string): Promise<Ruta | null> {
+  async obtenerRutaPorId(
+    rutaId: string,
+    creadorId: string,
+  ): Promise<Ruta | null> {
     const ruta = await this.rutasRepository.findOne({
       where: {
         id: rutaId,
@@ -286,7 +285,10 @@ export class RutasService {
             cambioDetectado = true;
           }
 
-          if ((puntoExistente.direccion ?? null) !== (direccionNormalizada ?? null)) {
+          if (
+            (puntoExistente.direccion ?? null) !==
+            (direccionNormalizada ?? null)
+          ) {
             puntoExistente.direccion = direccionNormalizada ?? null;
             cambioDetectado = true;
           }

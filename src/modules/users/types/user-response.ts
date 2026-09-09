@@ -1,7 +1,4 @@
-import {
-  EstadoUsuarioEnum,
-  TipoDocumentoEnum,
-} from '../entities/User.entity';
+import { EstadoUsuarioEnum, TipoDocumentoEnum } from '../entities/User.entity';
 
 export type UserMeResponse = {
   id: string;

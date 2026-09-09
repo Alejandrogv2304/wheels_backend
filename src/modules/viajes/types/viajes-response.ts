@@ -1,5 +1,5 @@
-import { Viaje } from "../entities/viajes.entity";
-import { TipoVehiculo } from "../../vehiculo/entities/vehiculo.entity";
+import { Viaje } from '../entities/viajes.entity';
+import { TipoVehiculo } from '../../vehiculo/entities/vehiculo.entity';
 
 export type ObtenerViajesResponse = {
   viajes: ViajeListado[];

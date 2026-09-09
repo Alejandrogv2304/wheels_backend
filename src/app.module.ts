@@ -47,7 +47,7 @@ import { ReservasModule } from './modules/reservas/reservas.module';
       inject: [ConfigService],
     }),
     SupabaseModule,
-    JwtModule.register({global: true}),
+    JwtModule.register({ global: true }),
     AuthModule,
     UsersModule,
     RutasModule,
@@ -57,7 +57,7 @@ import { ReservasModule } from './modules/reservas/reservas.module';
     CatalogoVehiculosModule,
     ReservasModule,
   ],
-  
+
   providers: [
     { provide: 'APP_GUARD', useClass: ThrottlerGuard },
     { provide: 'APP_GUARD', useClass: JwtAuthGuard },

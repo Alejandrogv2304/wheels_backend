@@ -16,7 +16,6 @@ import { Vehiculo } from '../../vehiculo/entities/vehiculo.entity';
 import { Ruta } from '../../rutas/entities/rutas.entity';
 import { Reserva } from 'src/modules/reservas/entities/reserva.entity';
 
-
 export enum EstadoViaje {
   ACTIVO = 'activo',
   CANCELADO = 'cancelado',

@@ -39,7 +39,6 @@ export class CrearVehiculoDto {
   })
   placa!: string;
 
-
   @ApiProperty({ example: TipoVehiculo.CARRO, enum: TipoVehiculo })
   @IsEnum(TipoVehiculo, {
     message: 'El tipo debe ser carro o moto',

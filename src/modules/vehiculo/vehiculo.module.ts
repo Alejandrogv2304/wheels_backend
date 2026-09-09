@@ -7,8 +7,7 @@ import { UsersModule } from '../users/users.module';
 import { Viaje } from '../viajes/entities/viajes.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Vehiculo, Viaje]),
- UsersModule],
+  imports: [TypeOrmModule.forFeature([Vehiculo, Viaje]), UsersModule],
   providers: [VehiculoService],
   controllers: [VehiculoController],
   exports: [VehiculoService],

@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { Repository } from 'typeorm';
 import { PuntoRuta } from './entities/punto-ruta.entity';
@@ -7,13 +12,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class PuntosRutaService {
-
   constructor(
-      private readonly dataSource: DataSource,
-  
-       @InjectRepository(PuntoRuta)
-      private readonly puntosRutaRepository: Repository<PuntoRuta>,
-    ) {}
+    private readonly dataSource: DataSource,
+
+    @InjectRepository(PuntoRuta)
+    private readonly puntosRutaRepository: Repository<PuntoRuta>,
+  ) {}
   crearPuntosParaRuta(
     manager: EntityManager,
     rutaId: string,
@@ -70,24 +74,25 @@ export class PuntosRutaService {
   }
 
   async eliminarPuntoRuta(id: string, creadorId: string) {
-  const punto = await this.puntosRutaRepository.findOne(
-    { where: { id },
-    relations: {
-      ruta: true
+    const punto = await this.puntosRutaRepository.findOne({
+      where: { id },
+      relations: {
+        ruta: true,
+      },
+    });
+
+    if (!punto) {
+      throw new NotFoundException('Punto de ruta no encontrado');
     }
-   }
-  );
 
-  if(!punto) {
-    throw new NotFoundException('Punto de ruta no encontrado');
-  }
+    if (punto?.ruta.creadorId !== creadorId) {
+      throw new ForbiddenException(
+        'No tienes permisos para eliminar este punto de ruta',
+      );
+    }
 
-  if(punto?.ruta.creadorId !== creadorId) {
-    throw new ForbiddenException('No tienes permisos para eliminar este punto de ruta');
-  }
+    await this.puntosRutaRepository.softDelete(id);
 
-  await this.puntosRutaRepository.softDelete(id);
-
-  return { message: 'Punto de ruta eliminado correctamente' };
+    return { message: 'Punto de ruta eliminado correctamente' };
   }
 }

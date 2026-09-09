@@ -13,7 +13,6 @@ import { User } from '../../users/entities/User.entity';
 import { PuntoRuta } from '../../puntos_ruta/entities/punto-ruta.entity';
 import { Viaje } from '../../viajes/entities/viajes.entity';
 
-
 export enum EstadoRuta {
   ACTIVA = 'activa',
   INACTIVA = 'inactiva',

@@ -13,9 +13,7 @@ import { ActualizarPuntoRutaDto } from './actualizar-punto-ruta.dto';
 export class ActualizarRutaDto {
   @ApiProperty({ example: 'Bucaramanga - UIS', required: false })
   @IsOptional()
-  @Transform(({ value }) =>
-    typeof value === 'string' ? value.trim() : value,
-  )
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'El nombre de la ruta debe ser un texto' })
   @MinLength(3, {
     message: 'El nombre de la ruta debe tener al menos 3 caracteres',

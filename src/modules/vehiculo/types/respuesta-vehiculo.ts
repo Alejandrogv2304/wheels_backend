@@ -1,4 +1,4 @@
-import { TipoVehiculo } from "../entities/vehiculo.entity";
+import { TipoVehiculo } from '../entities/vehiculo.entity';
 
 export type VehiculoResponse = {
   id: string;

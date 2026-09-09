@@ -1,9 +1,4 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { TipoVehiculo } from '../../vehiculo/entities/vehiculo.entity';
@@ -20,7 +15,6 @@ export class CreateCatalogoVehiculoDto {
   @IsNotEmpty({ message: 'La referencia es obligatoria' })
   @MaxLength(100)
   referencia!: string;
-
 
   @ApiProperty({ example: TipoVehiculo.CARRO, enum: TipoVehiculo })
   @IsEnum(TipoVehiculo, {

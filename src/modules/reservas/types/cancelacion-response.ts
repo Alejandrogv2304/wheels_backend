@@ -5,4 +5,4 @@ export type cancelacionResponse = {
   viajeId: string;
   estado: EstadoReserva;
   fechaActualizacion: Date;
-}
+};

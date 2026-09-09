@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../common/types/authenticated-user';
@@ -41,6 +49,4 @@ export class ViajesController {
   obtenerTodosLosViajes(@Query() query: BuscarViajesQueryDto) {
     return this.viajesService.obtenerTodosLosViajes(query);
   }
-
-  
 }

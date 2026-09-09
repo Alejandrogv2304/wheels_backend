@@ -5,7 +5,7 @@ import { CatalogoVehiculo } from './entities/catalogo.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([CatalogoVehiculo])],
+  imports: [TypeOrmModule.forFeature([CatalogoVehiculo])],
   providers: [CatalogoVehiculosService],
   controllers: [CatalogoVehiculosController],
   exports: [CatalogoVehiculosService],

@@ -14,7 +14,9 @@ import { CrearPuntoRutaDto } from './crear-punto-ruta.dto';
 export class CrearRutaDto {
   @ApiProperty({ example: 'Bucaramanga - UIS' })
   @IsString({ message: 'El nombre de la ruta debe ser un texto' })
-  @MinLength(3, { message: 'El nombre de la ruta debe tener al menos 3 caracteres' })
+  @MinLength(3, {
+    message: 'El nombre de la ruta debe tener al menos 3 caracteres',
+  })
   nombre!: string;
 
   @ApiProperty({ example: false, required: false, default: false })

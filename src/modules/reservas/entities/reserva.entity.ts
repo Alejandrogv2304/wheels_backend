@@ -21,7 +21,7 @@ export enum EstadoReserva {
 @Entity('reservas')
 @Index('idx_reservas_pasajero_viaje_unique', ['pasajeroId', 'viajeId'], {
   unique: true,
-  where: "\"estado\" <> 'cancelada'",
+  where: '"estado" <> \'cancelada\'',
 })
 @Index('idx_reservas_viaje', ['viajeId'])
 @Index('idx_reservas_pasajero', ['pasajeroId'])

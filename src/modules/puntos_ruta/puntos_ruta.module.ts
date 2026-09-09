@@ -5,7 +5,7 @@ import { PuntoRuta } from './entities/punto-ruta.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([PuntoRuta])],
+  imports: [TypeOrmModule.forFeature([PuntoRuta])],
   controllers: [PuntosRutaController],
   providers: [PuntosRutaService],
   exports: [PuntosRutaService],

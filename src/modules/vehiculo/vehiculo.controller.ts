@@ -8,31 +8,29 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 @ApiTags('Vehículo')
 @Controller('vehiculo')
 export class VehiculoController {
-    constructor(
-         private readonly vehiculoService: VehiculoService
-    ){}
+  constructor(private readonly vehiculoService: VehiculoService) {}
 
-    @ApiOperation({ summary: 'Crear un vehículo' })
-    @Post('')
-    crearVehiculo(
-      @Body() crearVehiculoDto: CrearVehiculoDto,
-      @CurrentUser() user: AuthenticatedUser,
-    ) {
-      return this.vehiculoService.crearVehiculo(crearVehiculoDto, user.id);
-    }
+  @ApiOperation({ summary: 'Crear un vehículo' })
+  @Post('')
+  crearVehiculo(
+    @Body() crearVehiculoDto: CrearVehiculoDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.vehiculoService.crearVehiculo(crearVehiculoDto, user.id);
+  }
 
-    @ApiOperation({ summary: 'Obtener vehículos por usuario' })
-    @Get('')
-    obtenerVehiculosPorUsuario(@CurrentUser() user: AuthenticatedUser) {
-      return this.vehiculoService.obtenerVehiculosPorUsuario(user.id);
-    }
+  @ApiOperation({ summary: 'Obtener vehículos por usuario' })
+  @Get('')
+  obtenerVehiculosPorUsuario(@CurrentUser() user: AuthenticatedUser) {
+    return this.vehiculoService.obtenerVehiculosPorUsuario(user.id);
+  }
 
-    @ApiOperation({ summary: 'Eliminar un vehículo' })
-    @Post(':vehiculoId/eliminar')
-    eliminarVehiculo(
-      @Param('vehiculoId') vehiculoId: string,
-      @CurrentUser() user: AuthenticatedUser,
-    ) {
-      return this.vehiculoService.eliminarVehiculo(vehiculoId, user.id);
-    }
+  @ApiOperation({ summary: 'Eliminar un vehículo' })
+  @Post(':vehiculoId/eliminar')
+  eliminarVehiculo(
+    @Param('vehiculoId') vehiculoId: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.vehiculoService.eliminarVehiculo(vehiculoId, user.id);
+  }
 }

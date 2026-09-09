@@ -8,8 +8,6 @@ import {
   Unique,
 } from 'typeorm';
 
-
-
 @Entity('catalogo_vehiculos')
 @Unique('UQ_catalogo_vehiculo_marca_modelo', ['marca', 'referencia'])
 export class CatalogoVehiculo {

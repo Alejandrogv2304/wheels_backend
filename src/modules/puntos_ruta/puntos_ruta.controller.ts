@@ -7,11 +7,13 @@ import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 @ApiTags('Puntos de Ruta')
 @Controller('puntos-ruta')
 export class PuntosRutaController {
-    constructor(private readonly puntosRutaService: PuntosRutaService) {}
+  constructor(private readonly puntosRutaService: PuntosRutaService) {}
 
-    @Delete(':id')
-    async eliminarPuntoRuta(@Param('id') id: string, @CurrentUser() user: AuthenticatedUser) {
-       
-        return this.puntosRutaService.eliminarPuntoRuta(id, user.id);
-    }
+  @Delete(':id')
+  async eliminarPuntoRuta(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.puntosRutaService.eliminarPuntoRuta(id, user.id);
+  }
 }

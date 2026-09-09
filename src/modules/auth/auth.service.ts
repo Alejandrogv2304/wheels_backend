@@ -84,7 +84,9 @@ export class AuthService {
     }
 
     const profile = await this.usersService.upsertFromSupabaseUser(data.user);
-    const fotoUrl = await this.usersService.resolveFotoUrl(profile.foto ?? null);
+    const fotoUrl = await this.usersService.resolveFotoUrl(
+      profile.foto ?? null,
+    );
 
     return {
       message: 'Inicio de sesión exitoso',

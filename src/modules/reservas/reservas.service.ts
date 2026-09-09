@@ -26,89 +26,91 @@ export class ReservasService {
     dto: CreateReservaDto,
     pasajeroId: string,
   ): Promise<Reserva> {
-    return this.dataSource.transaction(async (manager) => {
-      const viajeRepository = manager.getRepository(Viaje);
-      const reservaRepository = manager.getRepository(Reserva);
+    return this.dataSource
+      .transaction(async (manager) => {
+        const viajeRepository = manager.getRepository(Viaje);
+        const reservaRepository = manager.getRepository(Reserva);
 
-      const viaje = await viajeRepository.findOne({
-        where: { id: dto.viajeId },
-        lock: { mode: 'pessimistic_write' },
-      });
+        const viaje = await viajeRepository.findOne({
+          where: { id: dto.viajeId },
+          lock: { mode: 'pessimistic_write' },
+        });
 
-      if (!viaje) {
-        throw new NotFoundException('No existe un viaje con el ID indicado');
-      }
+        if (!viaje) {
+          throw new NotFoundException('No existe un viaje con el ID indicado');
+        }
 
-      if (viaje.conductorId === pasajeroId) {
-        throw new ForbiddenException(
-          'No puedes reservar tu propio viaje como pasajero',
-        );
-      }
+        if (viaje.conductorId === pasajeroId) {
+          throw new ForbiddenException(
+            'No puedes reservar tu propio viaje como pasajero',
+          );
+        }
 
-      if (viaje.estado !== EstadoViaje.ACTIVO) {
-        throw new BadRequestException(
-          'Solo puedes reservar viajes que estén en estado activo',
-        );
-      }
+        if (viaje.estado !== EstadoViaje.ACTIVO) {
+          throw new BadRequestException(
+            'Solo puedes reservar viajes que estén en estado activo',
+          );
+        }
 
-      if (viaje.cupos <= 0) {
-        throw new BadRequestException(
-          'No hay cupos disponibles para este viaje',
-        );
-      }
+        if (viaje.cupos <= 0) {
+          throw new BadRequestException(
+            'No hay cupos disponibles para este viaje',
+          );
+        }
 
-      const reservaExistente = await reservaRepository.findOne({
-        where: {
+        const reservaExistente = await reservaRepository.findOne({
+          where: {
+            pasajeroId,
+            viajeId: dto.viajeId,
+            estado: Not(EstadoReserva.CANCELADA),
+          },
+        });
+
+        if (reservaExistente) {
+          throw new ConflictException(
+            'Ya existe una reserva de este pasajero para este viaje',
+          );
+        }
+
+        const reserva = reservaRepository.create({
           pasajeroId,
           viajeId: dto.viajeId,
-          estado: Not(EstadoReserva.CANCELADA),
-        },
+        });
+
+        const reservaGuardada = await reservaRepository.save(reserva);
+
+        const resultadoDescuento = await viajeRepository
+          .createQueryBuilder()
+          .update(Viaje)
+          .set({
+            cupos: () => '"cupos" - 1',
+          })
+          .where('id = :id', { id: viaje.id })
+          .andWhere('cupos > 0')
+          .andWhere('estado = :estado', { estado: EstadoViaje.ACTIVO })
+          .execute();
+
+        if (resultadoDescuento.affected !== 1) {
+          throw new BadRequestException(
+            'No fue posible descontar el cupo del viaje porque ya no hay disponibilidad',
+          );
+        }
+
+        this.logger.log(
+          `Reserva creada correctamente para pasajero ${pasajeroId} en el viaje ${dto.viajeId}`,
+        );
+
+        return reservaGuardada;
+      })
+      .catch((error: unknown) => {
+        if (this.esErrorPostgres(error) && error.code === '23505') {
+          throw new ConflictException(
+            'Ya existe una reserva de este pasajero para este viaje',
+          );
+        }
+
+        throw error;
       });
-
-      if (reservaExistente) {
-        throw new ConflictException(
-          'Ya existe una reserva de este pasajero para este viaje',
-        );
-      }
-
-      const reserva = reservaRepository.create({
-        pasajeroId,
-        viajeId: dto.viajeId,
-      });
-
-      const reservaGuardada = await reservaRepository.save(reserva);
-
-      const resultadoDescuento = await viajeRepository
-        .createQueryBuilder()
-        .update(Viaje)
-        .set({
-          cupos: () => '"cupos" - 1',
-        })
-        .where('id = :id', { id: viaje.id })
-        .andWhere('cupos > 0')
-        .andWhere('estado = :estado', { estado: EstadoViaje.ACTIVO })
-        .execute();
-
-      if (resultadoDescuento.affected !== 1) {
-        throw new BadRequestException(
-          'No fue posible descontar el cupo del viaje porque ya no hay disponibilidad',
-        );
-      }
-
-      this.logger.log(
-        `Reserva creada correctamente para pasajero ${pasajeroId} en el viaje ${dto.viajeId}`,
-      );
-
-      return reservaGuardada;
-    }).catch((error: unknown) => {
-      if (this.esErrorPostgres(error) && error.code === '23505') {
-        throw new ConflictException(
-          'Ya existe una reserva de este pasajero para este viaje',
-        );
-      }
-
-      throw error;
-    });
   }
 
   async cancelarReserva(

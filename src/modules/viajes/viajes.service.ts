@@ -15,283 +15,286 @@ import {
   type ViajeListado,
 } from './types/viajes-response';
 
-
-
 @Injectable()
 export class ViajesService {
-     private readonly logger = new Logger(ViajesService.name);
-    
-        constructor(
-            @InjectRepository(Viaje)
-            private readonly viajeRepository: Repository<Viaje>,
-            private readonly vehiculoService: VehiculoService,
-            private readonly rutasService: RutasService,
-        ){}
+  private readonly logger = new Logger(ViajesService.name);
 
-        async createViaje(
-          dto: CreateViajeDto,
-          conductorId: string,
-        ): Promise<ViajeResponse> {
-          this.logger.log(
-            `Solicitud de creacion de viaje recibida para conductor ${conductorId} con vehiculo ${dto.vehiculoId} y ruta ${dto.rutaId}`,
-          );
+  constructor(
+    @InjectRepository(Viaje)
+    private readonly viajeRepository: Repository<Viaje>,
+    private readonly vehiculoService: VehiculoService,
+    private readonly rutasService: RutasService,
+  ) {}
 
-          const fechaSalida = new Date(dto.fechaSalida);
+  async createViaje(
+    dto: CreateViajeDto,
+    conductorId: string,
+  ): Promise<ViajeResponse> {
+    this.logger.log(
+      `Solicitud de creacion de viaje recibida para conductor ${conductorId} con vehiculo ${dto.vehiculoId} y ruta ${dto.rutaId}`,
+    );
 
-          if (Number.isNaN(fechaSalida.getTime())) {
-            throw new BadRequestException(
-              'La fecha de salida no tiene un formato valido',
-            );
-          }
+    const fechaSalida = new Date(dto.fechaSalida);
 
-          if (fechaSalida.getTime() < Date.now()) {
-            throw new BadRequestException(
-              'La fecha de salida no puede ser anterior a la actual',
-            );
-          }
+    if (Number.isNaN(fechaSalida.getTime())) {
+      throw new BadRequestException(
+        'La fecha de salida no tiene un formato valido',
+      );
+    }
 
-          await this.vehiculoService.validarCapacidadVehiculoParaViaje(
-            dto.vehiculoId,
-            conductorId,
-            dto.cupos,
-          );
+    if (fechaSalida.getTime() < Date.now()) {
+      throw new BadRequestException(
+        'La fecha de salida no puede ser anterior a la actual',
+      );
+    }
 
-          await this.rutasService.validarRutaPerteneceAConductor(
-            dto.rutaId,
-            conductorId,
-          );
+    await this.vehiculoService.validarCapacidadVehiculoParaViaje(
+      dto.vehiculoId,
+      conductorId,
+      dto.cupos,
+    );
 
-          const viaje = this.viajeRepository.create({
-            conductorId,
-            vehiculoId: dto.vehiculoId,
-            rutaId: dto.rutaId,
-            precio: dto.precio.toString(),
-            cupos: dto.cupos,
-            fechaSalida,
-            observaciones: dto.observaciones ?? null,
-            estado: EstadoViaje.ACTIVO,
-          });
+    await this.rutasService.validarRutaPerteneceAConductor(
+      dto.rutaId,
+      conductorId,
+    );
 
-          try {
-            const viajeGuardado = await this.viajeRepository.save(viaje);
+    const viaje = this.viajeRepository.create({
+      conductorId,
+      vehiculoId: dto.vehiculoId,
+      rutaId: dto.rutaId,
+      precio: dto.precio.toString(),
+      cupos: dto.cupos,
+      fechaSalida,
+      observaciones: dto.observaciones ?? null,
+      estado: EstadoViaje.ACTIVO,
+    });
 
-            this.logger.log(
-              `Viaje creado correctamente con id ${viajeGuardado.id} para conductor ${conductorId}`,
-            );
+    try {
+      const viajeGuardado = await this.viajeRepository.save(viaje);
 
-            return {
-              id: viajeGuardado.id,
-              conductorId: viajeGuardado.conductorId,
-              vehiculoId: viajeGuardado.vehiculoId,
-              rutaId: viajeGuardado.rutaId,
-              precio: viajeGuardado.precio,
-              cupos: viajeGuardado.cupos,
-              fechaSalida: viajeGuardado.fechaSalida,
-              observaciones: viajeGuardado.observaciones,
-              estado: viajeGuardado.estado,
-              fechaCreacion: viajeGuardado.fechaCreacion,
-            };
-          } catch (error) {
-            const mensaje =
-              error instanceof Error && error.message
-                ? error.message
-                : 'No se pudo crear el viaje';
+      this.logger.log(
+        `Viaje creado correctamente con id ${viajeGuardado.id} para conductor ${conductorId}`,
+      );
 
-            this.logger.error(
-              `Error creando viaje para conductor ${conductorId}: ${mensaje}`,
-              error instanceof Error ? error.stack : undefined,
-            );
+      return {
+        id: viajeGuardado.id,
+        conductorId: viajeGuardado.conductorId,
+        vehiculoId: viajeGuardado.vehiculoId,
+        rutaId: viajeGuardado.rutaId,
+        precio: viajeGuardado.precio,
+        cupos: viajeGuardado.cupos,
+        fechaSalida: viajeGuardado.fechaSalida,
+        observaciones: viajeGuardado.observaciones,
+        estado: viajeGuardado.estado,
+        fechaCreacion: viajeGuardado.fechaCreacion,
+      };
+    } catch (error) {
+      const mensaje =
+        error instanceof Error && error.message
+          ? error.message
+          : 'No se pudo crear el viaje';
 
-            throw new BadRequestException('No se pudo crear el viaje');
-          }
-        }
+      this.logger.error(
+        `Error creando viaje para conductor ${conductorId}: ${mensaje}`,
+        error instanceof Error ? error.stack : undefined,
+      );
 
-      //Este endpoint esta pensado para ser el que se use apenas se ingresa a la aplicacion como pasajero. 
-      async obtenerTodosLosViajes(
-        query: BuscarViajesQueryDto,
-      ): Promise<ObtenerViajesResponse> {
-        const limit = query.limit;
-        const skip =
-          query.skip > 0 ? query.skip : (query.page - 1) * query.limit;
+      throw new BadRequestException('No se pudo crear el viaje');
+    }
+  }
 
-        const qb = this.viajeRepository
-          .createQueryBuilder('viaje')
-          .leftJoin('viaje.ruta', 'ruta')
-          .leftJoin('viaje.vehiculo', 'vehiculo')
-          .select([
-            'viaje.id',
-            'viaje.conductorId',
-            'viaje.vehiculoId',
-            'viaje.rutaId',
-            'viaje.precio',
-            'viaje.cupos',
-            'viaje.fechaSalida',
-            'viaje.observaciones',
-            'ruta.id',
-            'ruta.nombre',
-            'vehiculo.id',
-            'vehiculo.marca',
-            'vehiculo.referencia',
-            'vehiculo.tipo',
-          ])
-          .where('viaje.estado = :estado', { estado: EstadoViaje.ACTIVO })
-          .andWhere('viaje.fecha_eliminacion IS NULL')
-          .andWhere('viaje.fecha_salida >= CURRENT_TIMESTAMP');
+  //Este endpoint esta pensado para ser el que se use apenas se ingresa a la aplicacion como pasajero.
+  async obtenerTodosLosViajes(
+    query: BuscarViajesQueryDto,
+  ): Promise<ObtenerViajesResponse> {
+    const limit = query.limit;
+    const skip = query.skip > 0 ? query.skip : (query.page - 1) * query.limit;
 
-        if (query.q) {
-          const q = `%${query.q}%`;
+    const qb = this.viajeRepository
+      .createQueryBuilder('viaje')
+      .leftJoin('viaje.ruta', 'ruta')
+      .leftJoin('viaje.vehiculo', 'vehiculo')
+      .select([
+        'viaje.id',
+        'viaje.conductorId',
+        'viaje.vehiculoId',
+        'viaje.rutaId',
+        'viaje.precio',
+        'viaje.cupos',
+        'viaje.fechaSalida',
+        'viaje.observaciones',
+        'ruta.id',
+        'ruta.nombre',
+        'vehiculo.id',
+        'vehiculo.marca',
+        'vehiculo.referencia',
+        'vehiculo.tipo',
+      ])
+      .where('viaje.estado = :estado', { estado: EstadoViaje.ACTIVO })
+      .andWhere('viaje.fecha_eliminacion IS NULL')
+      .andWhere('viaje.fecha_salida >= CURRENT_TIMESTAMP');
 
-          qb.andWhere(
-            new Brackets((subQb) => {
-              subQb
-                .where('CAST(viaje.id AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.conductor_id AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.vehiculo_id AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.ruta_id AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.precio AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.cupos AS text) ILIKE :q', { q })
-                .orWhere('CAST(viaje.fecha_salida AS text) ILIKE :q', { q })
-                .orWhere('COALESCE(viaje.observaciones, \'\') ILIKE :q', { q })
-                .orWhere('ruta.nombre ILIKE :q', { q })
-                .orWhere('vehiculo.marca ILIKE :q', { q })
-                .orWhere('vehiculo.referencia ILIKE :q', { q })
-                .orWhere('CAST(vehiculo.tipo AS text) ILIKE :q', { q });
-            }),
-          );
-        }
+    if (query.q) {
+      const q = `%${query.q}%`;
 
-        const [viajes, total] = await qb
-          .orderBy('viaje.fecha_salida', 'ASC')
-          .skip(skip)
-          .take(limit)
-          .getManyAndCount();
+      qb.andWhere(
+        new Brackets((subQb) => {
+          subQb
+            .where('CAST(viaje.id AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.conductor_id AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.vehiculo_id AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.ruta_id AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.precio AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.cupos AS text) ILIKE :q', { q })
+            .orWhere('CAST(viaje.fecha_salida AS text) ILIKE :q', { q })
+            .orWhere("COALESCE(viaje.observaciones, '') ILIKE :q", { q })
+            .orWhere('ruta.nombre ILIKE :q', { q })
+            .orWhere('vehiculo.marca ILIKE :q', { q })
+            .orWhere('vehiculo.referencia ILIKE :q', { q })
+            .orWhere('CAST(vehiculo.tipo AS text) ILIKE :q', { q });
+        }),
+      );
+    }
 
-        return {
-          viajes: viajes as ViajeListado[],
-          meta: {
-            page: query.skip > 0 ? Math.floor(skip / limit) + 1 : query.page,
-            limit,
-            skip,
-            total,
-            totalPages: Math.max(1, Math.ceil(total / limit)),
-          },
-        };
-      }
+    const [viajes, total] = await qb
+      .orderBy('viaje.fecha_salida', 'ASC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
-      //Este endpoint esta pensado para usarse en el perfil de un usuario cuando quiera ver todos los viajes que ha hecho
-      async obtenerViajePorConductorId(
-        conductorId: string,
-      ): Promise<ViajeConRutaYPuntos[]> {
-        const viajes = await this.viajeRepository
-          .createQueryBuilder('viaje')
-          .leftJoinAndSelect('viaje.ruta', 'ruta')
-          .leftJoinAndSelect('ruta.puntos', 'punto', 'punto.fecha_eliminacion IS NULL')
-          .select([
-            'viaje.id',
-            'viaje.conductorId',
-            'viaje.vehiculoId',
-            'viaje.rutaId',
-            'viaje.precio',
-            'viaje.cupos',
-            'viaje.fechaSalida',
-            'viaje.observaciones',
-            'viaje.estado',
-            'viaje.fechaCreacion',
-            'ruta.id',
-            'ruta.nombre',
-            'ruta.favorita',
-            'punto.id',
-            'punto.nombre',
-            'punto.direccion',
-            'punto.latitud',
-            'punto.longitud',
-            'punto.orden',
-          ])
-          .where('viaje.conductorId = :conductorId', { conductorId })
-          .andWhere('viaje.fecha_eliminacion IS NULL')
-          .orderBy('viaje.fechaSalida', 'ASC')
-          .addOrderBy('punto.orden', 'ASC')
-          .getMany();
+    return {
+      viajes: viajes,
+      meta: {
+        page: query.skip > 0 ? Math.floor(skip / limit) + 1 : query.page,
+        limit,
+        skip,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
 
-        return viajes as ViajeConRutaYPuntos[];
-      }
+  //Este endpoint esta pensado para usarse en el perfil de un usuario cuando quiera ver todos los viajes que ha hecho
+  async obtenerViajePorConductorId(
+    conductorId: string,
+  ): Promise<ViajeConRutaYPuntos[]> {
+    const viajes = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .leftJoinAndSelect('viaje.ruta', 'ruta')
+      .leftJoinAndSelect(
+        'ruta.puntos',
+        'punto',
+        'punto.fecha_eliminacion IS NULL',
+      )
+      .select([
+        'viaje.id',
+        'viaje.conductorId',
+        'viaje.vehiculoId',
+        'viaje.rutaId',
+        'viaje.precio',
+        'viaje.cupos',
+        'viaje.fechaSalida',
+        'viaje.observaciones',
+        'viaje.estado',
+        'viaje.fechaCreacion',
+        'ruta.id',
+        'ruta.nombre',
+        'ruta.favorita',
+        'punto.id',
+        'punto.nombre',
+        'punto.direccion',
+        'punto.latitud',
+        'punto.longitud',
+        'punto.orden',
+      ])
+      .where('viaje.conductorId = :conductorId', { conductorId })
+      .andWhere('viaje.fecha_eliminacion IS NULL')
+      .orderBy('viaje.fechaSalida', 'ASC')
+      .addOrderBy('punto.orden', 'ASC')
+      .getMany();
 
+    return viajes;
+  }
 
-// Este metodo esta pensado para usarse cuando se le de en obtener mas informacion del viaje en el front
-      async obtenerViajePorId(
-        viajeId: string,
-      ): Promise<ViajeConRutaYPuntosDetallado | null> {
-        const viaje = await this.viajeRepository
-          .createQueryBuilder('viaje')
-          .leftJoinAndSelect('viaje.ruta', 'ruta')
-          .leftJoinAndSelect('ruta.puntos', 'punto', 'punto.fecha_eliminacion IS NULL')
-          .leftJoinAndSelect('viaje.vehiculo', 'vehiculo')
-          .select([
-            'viaje.id',
-            'viaje.conductorId',
-            'viaje.vehiculoId',
-            'viaje.rutaId',
-            'viaje.precio',
-            'viaje.cupos',
-            'viaje.fechaSalida',
-            'viaje.observaciones',
-            'viaje.estado',
-            'viaje.fechaCreacion',
-            'ruta.id',
-            'ruta.nombre',
-            'ruta.favorita',
-            'punto.id',
-            'punto.nombre',
-            'punto.direccion',
-            'punto.latitud',
-            'punto.longitud',
-            'punto.orden',
-            'vehiculo.id',
-            'vehiculo.marca',
-            'vehiculo.referencia',
-            'vehiculo.tipo',
-          ])
-          .where('viaje.id = :viajeId', { viajeId })
-          .andWhere('viaje.fecha_eliminacion IS NULL')
-          .orderBy('viaje.fechaSalida', 'ASC')
-          .addOrderBy('punto.orden', 'ASC')
-          .getOne();
+  // Este metodo esta pensado para usarse cuando se le de en obtener mas informacion del viaje en el front
+  async obtenerViajePorId(
+    viajeId: string,
+  ): Promise<ViajeConRutaYPuntosDetallado | null> {
+    const viaje = await this.viajeRepository
+      .createQueryBuilder('viaje')
+      .leftJoinAndSelect('viaje.ruta', 'ruta')
+      .leftJoinAndSelect(
+        'ruta.puntos',
+        'punto',
+        'punto.fecha_eliminacion IS NULL',
+      )
+      .leftJoinAndSelect('viaje.vehiculo', 'vehiculo')
+      .select([
+        'viaje.id',
+        'viaje.conductorId',
+        'viaje.vehiculoId',
+        'viaje.rutaId',
+        'viaje.precio',
+        'viaje.cupos',
+        'viaje.fechaSalida',
+        'viaje.observaciones',
+        'viaje.estado',
+        'viaje.fechaCreacion',
+        'ruta.id',
+        'ruta.nombre',
+        'ruta.favorita',
+        'punto.id',
+        'punto.nombre',
+        'punto.direccion',
+        'punto.latitud',
+        'punto.longitud',
+        'punto.orden',
+        'vehiculo.id',
+        'vehiculo.marca',
+        'vehiculo.referencia',
+        'vehiculo.tipo',
+      ])
+      .where('viaje.id = :viajeId', { viajeId })
+      .andWhere('viaje.fecha_eliminacion IS NULL')
+      .orderBy('viaje.fechaSalida', 'ASC')
+      .addOrderBy('punto.orden', 'ASC')
+      .getOne();
 
-        if (!viaje) {
-          return null;
-        }
+    if (!viaje) {
+      return null;
+    }
 
-        return {
-          id: viaje.id,
-          conductorId: viaje.conductorId,
-          vehiculoId: viaje.vehiculoId,
-          rutaId: viaje.rutaId,
-          precio: viaje.precio,
-          cupos: viaje.cupos,
-          fechaSalida: viaje.fechaSalida,
-          observaciones: viaje.observaciones,
-          estado: viaje.estado,
-          fechaCreacion: viaje.fechaCreacion,
-          ruta: {
-            id: viaje.ruta.id,
-            nombre: viaje.ruta.nombre,
-            favorita: viaje.ruta.favorita,
-            puntos: (viaje.ruta.puntos ?? []).map((punto) => ({
-              id: punto.id,
-              nombre: punto.nombre,
-              direccion: punto.direccion,
-              latitud: punto.latitud,
-              longitud: punto.longitud,
-              orden: punto.orden,
-            })),
-          },
-          vehiculo: {
-            id: viaje.vehiculo.id,
-            marca: viaje.vehiculo.marca,
-            referencia: viaje.vehiculo.referencia,
-            tipo: viaje.vehiculo.tipo,
-          },
-        };
-      }
-    
+    return {
+      id: viaje.id,
+      conductorId: viaje.conductorId,
+      vehiculoId: viaje.vehiculoId,
+      rutaId: viaje.rutaId,
+      precio: viaje.precio,
+      cupos: viaje.cupos,
+      fechaSalida: viaje.fechaSalida,
+      observaciones: viaje.observaciones,
+      estado: viaje.estado,
+      fechaCreacion: viaje.fechaCreacion,
+      ruta: {
+        id: viaje.ruta.id,
+        nombre: viaje.ruta.nombre,
+        favorita: viaje.ruta.favorita,
+        puntos: (viaje.ruta.puntos ?? []).map((punto) => ({
+          id: punto.id,
+          nombre: punto.nombre,
+          direccion: punto.direccion,
+          latitud: punto.latitud,
+          longitud: punto.longitud,
+          orden: punto.orden,
+        })),
+      },
+      vehiculo: {
+        id: viaje.vehiculo.id,
+        marca: viaje.vehiculo.marca,
+        referencia: viaje.vehiculo.referencia,
+        tipo: viaje.vehiculo.tipo,
+      },
+    };
+  }
 }

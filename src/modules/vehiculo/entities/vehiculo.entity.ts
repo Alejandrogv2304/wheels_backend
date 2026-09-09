@@ -13,7 +13,6 @@ import {
 import { User } from '../../users/entities/User.entity';
 import { Viaje } from 'src/modules/viajes/entities/viajes.entity';
 
-
 export enum TipoVehiculo {
   CARRO = 'carro',
   MOTO = 'moto',

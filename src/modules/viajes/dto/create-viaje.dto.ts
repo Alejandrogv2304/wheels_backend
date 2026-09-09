@@ -13,15 +13,14 @@ import {
 } from 'class-validator';
 
 export class CreateViajeDto {
-
   @ApiProperty({ example: 'uuid-del-vehiculo' })
   @IsUUID()
-  @IsNotEmpty({message: 'El ID del vehiculo es obligatorio'})
+  @IsNotEmpty({ message: 'El ID del vehiculo es obligatorio' })
   vehiculoId!: string;
 
   @ApiProperty({ example: 'uuid-de-la-ruta' })
   @IsUUID()
-  @IsNotEmpty({message: 'El ID de la ruta es obligatorio'})
+  @IsNotEmpty({ message: 'El ID de la ruta es obligatorio' })
   rutaId!: string;
 
   @ApiProperty({ example: 3500 })
