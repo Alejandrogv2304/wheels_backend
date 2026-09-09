@@ -1,3 +1,4 @@
+import { TipoVehiculo } from 'src/modules/vehiculo/entities/vehiculo.entity';
 import {
   Column,
   CreateDateColumn,
@@ -7,10 +8,7 @@ import {
   Unique,
 } from 'typeorm';
 
-export enum TipoVehiculo {
-  AUTOMOVIL = 'automovil',
-  MOTO = 'moto',
-}
+
 
 @Entity('catalogo_vehiculos')
 @Unique('UQ_catalogo_vehiculo_marca_modelo', ['marca', 'referencia'])
@@ -33,7 +31,7 @@ export class CatalogoVehiculo {
   @Column({
     type: 'enum',
     enum: TipoVehiculo,
-    enumName: 'tipo_catalogo_vehiculo_enum',
+    enumName: 'tipo_vehiculo_enum',
   })
   tipo!: TipoVehiculo;
 

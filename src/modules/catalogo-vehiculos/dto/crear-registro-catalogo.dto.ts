@@ -6,7 +6,7 @@ import {
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-import { TipoVehiculo } from '../entities/catalogo.entity';
+import { TipoVehiculo } from '../../vehiculo/entities/vehiculo.entity';
 
 export class CreateCatalogoVehiculoDto {
   @ApiProperty({ example: 'Toyota' })
@@ -22,7 +22,7 @@ export class CreateCatalogoVehiculoDto {
   referencia!: string;
 
 
-  @ApiProperty({ example: 'Automovil' })
+  @ApiProperty({ example: TipoVehiculo.CARRO, enum: TipoVehiculo })
   @IsEnum(TipoVehiculo, {
     message: `El tipo debe ser uno de los siguientes valores: ${Object.values(
       TipoVehiculo,

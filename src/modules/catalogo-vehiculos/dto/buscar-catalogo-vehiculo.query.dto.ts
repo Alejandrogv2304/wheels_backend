@@ -1,13 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, MinLength } from 'class-validator';
-import { TipoVehiculo } from '../entities/catalogo.entity';
+import { TipoVehiculo } from '../../vehiculo/entities/vehiculo.entity';
 
 export class BuscarCatalogoVehiculoQueryDto {
-  @ApiPropertyOptional({ enum: TipoVehiculo, example: TipoVehiculo.AUTOMOVIL })
+  @ApiPropertyOptional({ enum: TipoVehiculo, example: TipoVehiculo.CARRO })
   @IsOptional()
   @IsEnum(TipoVehiculo, {
-    message: 'El tipo debe ser automovil o moto',
+    message: 'El tipo debe ser carro o moto',
   })
   tipo?: TipoVehiculo;
 
