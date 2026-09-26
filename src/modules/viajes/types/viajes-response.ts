@@ -1,4 +1,5 @@
 import { Viaje } from '../entities/viajes.entity';
+import { EstadoReserva } from '../../reservas/entities/reserva.entity';
 import { TipoVehiculo } from '../../vehiculo/entities/vehiculo.entity';
 
 export type ObtenerViajesResponse = {
@@ -52,6 +53,17 @@ export type ViajeConRutaYPuntos = Pick<
       orden: number;
     }>;
   };
+  reservas: Array<{
+    id: string;
+    pasajeroId: string;
+    estado: EstadoReserva;
+    fechaCreacion: Date;
+    pasajero: {
+      id: string;
+      nombre?: string;
+      telefono?: string;
+    };
+  }>;
 };
 
 export type ViajeListado = Pick<
@@ -80,7 +92,6 @@ export type ViajeListado = Pick<
 export type ViajeConRutaYPuntosDetallado = Pick<
   Viaje,
   | 'id'
-  | 'conductorId'
   | 'vehiculoId'
   | 'rutaId'
   | 'precio'
@@ -90,6 +101,12 @@ export type ViajeConRutaYPuntosDetallado = Pick<
   | 'estado'
   | 'fechaCreacion'
 > & {
+  conductor:{
+    id: string;
+    nombre?: string;
+    telefono?: string | null;
+    correo: string;
+  }
   ruta: {
     id: string;
     nombre: string;

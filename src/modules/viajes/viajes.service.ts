@@ -115,6 +115,7 @@ export class ViajesService {
       .createQueryBuilder('viaje')
       .leftJoin('viaje.ruta', 'ruta')
       .leftJoin('viaje.vehiculo', 'vehiculo')
+      .leftJoin('ruta.puntos', 'punto', 'punto.fecha_eliminacion IS NULL')
       .select([
         'viaje.id',
         'viaje.conductorId',
@@ -130,6 +131,9 @@ export class ViajesService {
         'vehiculo.marca',
         'vehiculo.referencia',
         'vehiculo.tipo',
+        'punto.id',
+        'punto.nombre',
+        'punto.direccion',
       ])
       .where('viaje.estado = :estado', { estado: EstadoViaje.ACTIVO })
       .andWhere('viaje.fecha_eliminacion IS NULL')
@@ -137,6 +141,12 @@ export class ViajesService {
 
     if (query.q) {
       const q = `%${query.q}%`;
+
+      qb.leftJoin(
+        'ruta.puntos',
+        'puntoBusqueda',
+        'puntoBusqueda.fecha_eliminacion IS NULL',
+      );
 
       qb.andWhere(
         new Brackets((subQb) => {
@@ -152,8 +162,28 @@ export class ViajesService {
             .orWhere('ruta.nombre ILIKE :q', { q })
             .orWhere('vehiculo.marca ILIKE :q', { q })
             .orWhere('vehiculo.referencia ILIKE :q', { q })
-            .orWhere('CAST(vehiculo.tipo AS text) ILIKE :q', { q });
+            .orWhere('CAST(vehiculo.tipo AS text) ILIKE :q', { q })
+            .orWhere('puntoBusqueda.nombre ILIKE :q', { q })
+            .orWhere('puntoBusqueda.direccion ILIKE :q', { q });
         }),
+      );
+    }
+
+    //Aquí dejamos una ventana de una hora antes y después de la hora que ponga el usuario
+    if (query.fechaSalida) {
+      const fechaSalida = new Date(query.fechaSalida);
+      const unaHoraEnMilisegundos = 60 * 60 * 1000;
+
+      qb.andWhere(
+        'viaje.fecha_salida BETWEEN :fechaDesde AND :fechaHasta',
+        {
+          fechaDesde: new Date(
+            fechaSalida.getTime() - unaHoraEnMilisegundos,
+          ),
+          fechaHasta: new Date(
+            fechaSalida.getTime() + unaHoraEnMilisegundos,
+          ),
+        },
       );
     }
 
@@ -187,6 +217,13 @@ export class ViajesService {
         'punto',
         'punto.fecha_eliminacion IS NULL',
       )
+      .leftJoinAndSelect(
+        'viaje.reservas',
+        'reserva',
+        'reserva.estado != :estadoCancelada',
+        { estadoCancelada: 'cancelada' },
+      )
+      .leftJoinAndSelect('reserva.pasajero', 'pasajero')
       .select([
         'viaje.id',
         'viaje.conductorId',
@@ -207,6 +244,13 @@ export class ViajesService {
         'punto.latitud',
         'punto.longitud',
         'punto.orden',
+        'reserva.id',
+        'reserva.pasajeroId',
+        'reserva.estado',
+        'reserva.fechaCreacion',
+        'pasajero.id',
+        'pasajero.nombre',
+        'pasajero.telefono',
       ])
       .where('viaje.conductorId = :conductorId', { conductorId })
       .andWhere('viaje.fecha_eliminacion IS NULL')
@@ -229,6 +273,7 @@ export class ViajesService {
         'punto',
         'punto.fecha_eliminacion IS NULL',
       )
+      .leftJoinAndSelect('viaje.conductor', 'conductor')
       .leftJoinAndSelect('viaje.vehiculo', 'vehiculo')
       .select([
         'viaje.id',
@@ -254,6 +299,10 @@ export class ViajesService {
         'vehiculo.marca',
         'vehiculo.referencia',
         'vehiculo.tipo',
+        'conductor.id',
+        'conductor.nombre',
+        'conductor.telefono',
+        'conductor.correo',
       ])
       .where('viaje.id = :viajeId', { viajeId })
       .andWhere('viaje.fecha_eliminacion IS NULL')
@@ -267,7 +316,6 @@ export class ViajesService {
 
     return {
       id: viaje.id,
-      conductorId: viaje.conductorId,
       vehiculoId: viaje.vehiculoId,
       rutaId: viaje.rutaId,
       precio: viaje.precio,
@@ -276,6 +324,12 @@ export class ViajesService {
       observaciones: viaje.observaciones,
       estado: viaje.estado,
       fechaCreacion: viaje.fechaCreacion,
+      conductor:{
+        id: viaje.conductor.id,
+        nombre: viaje.conductor.nombre,
+        telefono: viaje.conductor.telefono,
+        correo: viaje.conductor.correo,
+      },
       ruta: {
         id: viaje.ruta.id,
         nombre: viaje.ruta.nombre,

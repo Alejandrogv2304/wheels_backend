@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Min, MinLength } from 'class-validator';
+import {
+  IsInt,
+  IsDateString,
+  IsOptional,
+  IsString,
+  Min,
+  MinLength,
+} from 'class-validator';
 
 const transformarNumero = (value: unknown, defaultValue: number): number => {
   if (value === undefined || value === null || value === '') {
@@ -48,4 +55,15 @@ export class BuscarViajesQueryDto {
     message: 'El texto de búsqueda debe tener al menos 2 caracteres',
   })
   q?: string;
+
+  @ApiPropertyOptional({
+    example: '2026-09-26T18:30:00',
+    description:
+      'Fecha y hora de salida. Filtra una ventana de una hora antes y después',
+  })
+  @IsOptional()
+  @IsDateString({}, {
+    message: 'La fecha de salida debe tener un formato ISO válido',
+  })
+  fechaSalida?: string;
 }
