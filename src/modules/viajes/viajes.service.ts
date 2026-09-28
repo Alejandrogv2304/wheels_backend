@@ -115,6 +115,7 @@ export class ViajesService {
       .createQueryBuilder('viaje')
       .leftJoin('viaje.ruta', 'ruta')
       .leftJoin('viaje.vehiculo', 'vehiculo')
+      .leftJoinAndSelect('viaje.conductor', 'conductor')
       .leftJoin('ruta.puntos', 'punto', 'punto.fecha_eliminacion IS NULL')
       .select([
         'viaje.id',
@@ -134,6 +135,10 @@ export class ViajesService {
         'punto.id',
         'punto.nombre',
         'punto.direccion',
+        'conductor.id',
+        'conductor.nombre',
+        'conductor.telefono',
+        'conductor.correo',
       ])
       .where('viaje.estado = :estado', { estado: EstadoViaje.ACTIVO })
       .andWhere('viaje.fecha_eliminacion IS NULL')

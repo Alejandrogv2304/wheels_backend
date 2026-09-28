@@ -87,6 +87,12 @@ export type ViajeListado = Pick<
     referencia: string;
     tipo: TipoVehiculo;
   };
+  conductor:{
+    id: string;
+    nombre?: string;
+    telefono?: string | null;
+    correo: string;
+  }
 };
 
 export type ViajeConRutaYPuntosDetallado = Pick<
