@@ -6,11 +6,17 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, Not, QueryFailedError } from 'typeorm';
+import { DataSource, Not, QueryFailedError, Repository } from 'typeorm';
 import { EstadoReserva, Reserva } from './entities/reserva.entity';
 import { Viaje, EstadoViaje } from '../viajes/entities/viajes.entity';
 import { CreateReservaDto } from './dto/create-reserva.dto';
 import { cancelacionResponse } from './types/cancelacion-response';
+import type {
+  ObtenerReservasResponse,
+  ReservaResponse,
+} from './types/reserva-response';
+import { InjectRepository } from '@nestjs/typeorm';
+import { BuscarReservasQueryDto } from './dto/buscar-reservas.query.dto';
 
 type PostgresError = QueryFailedError & {
   code?: string;
@@ -20,7 +26,12 @@ type PostgresError = QueryFailedError & {
 export class ReservasService {
   private readonly logger = new Logger(ReservasService.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    private readonly dataSource: DataSource,
+
+    @InjectRepository(Reserva)
+    private readonly reservaRepository: Repository<Reserva>,
+  ) {}
 
   async hacerReserva(
     dto: CreateReservaDto,
@@ -213,5 +224,72 @@ export class ReservasService {
         'code' in error &&
         typeof (error as { code?: string }).code === 'string')
     );
+  }
+
+  async obtenerReservasPorPasajeroId(
+    pasajeroId: string,
+    query: BuscarReservasQueryDto,
+  ): Promise<ObtenerReservasResponse> {
+    const limit = query.limit;
+    const skip = query.skip > 0 ? query.skip : (query.page - 1) * limit;
+
+    const [reservas, total] = await this.reservaRepository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.viaje', 'viaje')
+      .leftJoinAndSelect('viaje.ruta', 'ruta')
+      .leftJoinAndSelect('viaje.conductor', 'conductor')
+      .select([
+        'reserva.id',
+        'reserva.viajeId',
+        'reserva.estado',
+        'reserva.fechaCreacion',
+        'viaje.id',
+        'viaje.precio',
+        'viaje.fechaSalida',
+        'ruta.id',
+        'ruta.nombre',
+        'conductor.id',
+        'conductor.nombre',
+        'conductor.telefono',
+      ])
+      .where('reserva.pasajeroId = :pasajeroId', { pasajeroId })
+      .andWhere('viaje.fecha_eliminacion IS NULL')
+      .andWhere('viaje.fecha_salida >= CURRENT_TIMESTAMP')
+      .orderBy('reserva.fechaCreacion', 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+
+    const reservasResponse: ReservaResponse[] = reservas.map((reserva) => ({
+      id: reserva.id,
+      viajeId: reserva.viajeId,
+      estado: reserva.estado,
+      fechaCreacion: reserva.fechaCreacion,
+      viaje: {
+        id: reserva.viaje.id,
+        precio: reserva.viaje.precio,
+        fechaSalida: reserva.viaje.fechaSalida,
+        conductor: {
+          id: reserva.viaje.conductor.id,
+          nombre: reserva.viaje.conductor.nombre,
+          telefono: reserva.viaje.conductor.telefono,
+        },
+        ruta: {
+          id: reserva.viaje.ruta.id,
+          nombre: reserva.viaje.ruta.nombre,
+        },
+      },
+    }));
+
+    return {
+      reservas: reservasResponse,
+      meta: {
+        page: query.skip > 0 ? Math.floor(skip / limit) + 1 : query.page,
+        limit,
+        skip,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
   }
 }
