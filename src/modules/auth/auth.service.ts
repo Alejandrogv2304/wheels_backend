@@ -1,15 +1,22 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { SUPABASE_CLIENT } from '../supabase/supabase.module';
+import { ConfigService } from '@nestjs/config';
+import {
+  SUPABASE_ADMIN_CLIENT,
+  SUPABASE_CLIENT,
+} from '../supabase/supabase.module';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { RequestPasswordRecoveryDto } from './dto/request-password-recovery.dto';
+import { ConfirmPasswordRecoveryDto } from './dto/confirm-password-recovery.dto';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +25,10 @@ export class AuthService {
   constructor(
     @Inject(SUPABASE_CLIENT)
     private readonly supabase: SupabaseClient,
+    @Inject(SUPABASE_ADMIN_CLIENT)
+    private readonly supabaseAdmin: SupabaseClient,
     private readonly usersService: UsersService,
+    private readonly configService: ConfigService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -131,6 +141,92 @@ export class AuthService {
     return {
       message: 'URL de autenticación con Google generada correctamente',
       url: data.url,
+    };
+  }
+
+  async requestPasswordRecovery(dto: RequestPasswordRecoveryDto) {
+    const redirectTo = this.configService.get<string>(
+      'PASSWORD_RESET_REDIRECT_URL',
+      `${this.configService.get<string>('APP_URL', '')}/reset-password`,
+    );
+
+    const { error } = await this.supabase.auth.resetPasswordForEmail(
+      dto.email.trim().toLowerCase(),
+      { redirectTo },
+    );
+
+    if (error) {
+      this.logger.warn(`Solicitud de recuperación fallida: ${error.message}`);
+      throw new BadRequestException(
+        'No se pudo procesar la solicitud de recuperación',
+      );
+    }
+
+    // La respuesta es deliberadamente genérica para no revelar si el correo
+    // existe ni si pertenece a una cuenta de Google.
+    return {
+      message:
+        'Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña',
+    };
+  }
+
+  async confirmPasswordRecovery(
+    accessToken: string,
+    dto: ConfirmPasswordRecoveryDto,
+  ) {
+    if (!accessToken) {
+      throw new UnauthorizedException('Falta el token de recuperación ');
+    }
+
+    // El token proviene del enlace de recuperación enviado por Supabase.
+    // getUser valida el token contra Auth y evita confiar únicamente en datos
+    // enviados por el cliente, como el correo o el userId.
+    const { data, error } = await this.supabase.auth.getUser(accessToken);
+
+    if (error || !data.user) {
+      throw new UnauthorizedException('El token de recuperación no es válido');
+    }
+
+    // Se rechaza cualquier cuenta que tenga Google vinculado, incluso si
+    // también tiene una identidad email. Así se bloquean las cuentas mixtas.
+    const tieneGoogle = (data.user.identities ?? []).some(
+      (identity) => identity.provider === 'google',
+    );
+
+    if (tieneGoogle) {
+      throw new ForbiddenException(
+        'Las cuentas de Google deben administrar su contraseña desde Google',
+      );
+    }
+
+    const tieneIdentidadEmail = (data.user.identities ?? []).some(
+      (identity) => identity.provider === 'email',
+    );
+
+    if (!tieneIdentidadEmail) {
+      throw new ForbiddenException(
+        'Esta cuenta no puede recuperar la contraseña por este medio',
+      );
+    }
+
+    // El access token ya fue validado arriba. Usamos el cliente admin para
+    // actualizar la contraseña porque updateUser() requiere una sesión
+    // completa (access_token + refresh_token), mientras este endpoint recibe
+    // únicamente el access token en Authorization.
+    const { error: updateError } =
+      await this.supabaseAdmin.auth.admin.updateUserById(data.user.id, {
+        password: dto.password,
+      });
+
+    if (updateError) {
+      this.logger.warn(
+        `Actualización de contraseña fallida para ${data.user.id}: ${updateError.message}`,
+      );
+      throw new BadRequestException('No se pudo actualizar la contraseña');
+    }
+
+    return {
+      message: 'Contraseña actualizada correctamente',
     };
   }
 }
