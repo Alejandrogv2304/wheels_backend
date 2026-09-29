@@ -1,12 +1,15 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { AppModule, ObserveInstrument } from './app.module';
 import { ValidationPipe } from '@nestjs/common/pipes/validation.pipe';
 import cookieParser from 'cookie-parser';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Activa la instrumentación automática de requests, providers, errores y trazas.
+  const app = await NestFactory.create(AppModule, {
+    instrument: ObserveInstrument,
+  });
   const port = Number(process.env.PORT) || 3000;
 
   // Habilita CORS para permitir peticiones desde Angular

@@ -106,7 +106,18 @@ export class UsersService {
   }
 
   async isProfileComplete(userId: string): Promise<boolean> {
-    const user = await this.findById(userId);
+    const user = await this.usersRepository
+      .createQueryBuilder('usuario')
+      .select([
+        'usuario.id',
+        'usuario.nombre',
+        'usuario.telefono',
+        'usuario.correo',
+        'usuario.tipoDocumento',
+        'usuario.numeroDocumento',
+      ])
+      .where('usuario.id = :userId', { userId })
+      .getOne();
 
     if (!user) {
       throw new NotFoundException('Usuario no encontrado');
