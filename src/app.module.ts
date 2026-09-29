@@ -13,6 +13,7 @@ import { PuntosRutaModule } from './modules/puntos_ruta/puntos_ruta.module';
 import { VehiculoModule } from './modules/vehiculo/vehiculo.module';
 import { CatalogoVehiculosModule } from './modules/catalogo-vehiculos/catalogo-vehiculos.module';
 import { ReservasModule } from './modules/reservas/reservas.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ReservasModule } from './modules/reservas/reservas.module';
     VehiculoModule,
     CatalogoVehiculosModule,
     ReservasModule,
+    EmailModule,
   ],
 
   providers: [

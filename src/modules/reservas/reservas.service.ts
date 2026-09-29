@@ -17,6 +17,7 @@ import type {
 } from './types/reserva-response';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BuscarReservasQueryDto } from './dto/buscar-reservas.query.dto';
+import { EmailService } from '../email/email.service';
 
 type PostgresError = QueryFailedError & {
   code?: string;
@@ -31,13 +32,14 @@ export class ReservasService {
 
     @InjectRepository(Reserva)
     private readonly reservaRepository: Repository<Reserva>,
+    private readonly emailService: EmailService,
   ) {}
 
   async hacerReserva(
     dto: CreateReservaDto,
     pasajeroId: string,
   ): Promise<Reserva> {
-    return this.dataSource
+    const reservaCreada = await this.dataSource
       .transaction(async (manager) => {
         const viajeRepository = manager.getRepository(Viaje);
         const reservaRepository = manager.getRepository(Reserva);
@@ -122,13 +124,19 @@ export class ReservasService {
 
         throw error;
       });
+
+    // Se dispara después del commit sin bloquear la respuesta HTTP. Si Brevo
+    // falla, la reserva permanece creada y el error queda registrado.
+    void this.notificarNuevaReserva(reservaCreada.id);
+
+    return reservaCreada;
   }
 
   async cancelarReserva(
     reservaId: string,
     pasajeroId: string,
   ): Promise<cancelacionResponse> {
-    return this.dataSource.transaction(async (manager) => {
+    const respuesta = await this.dataSource.transaction(async (manager) => {
       const viajeRepository = manager.getRepository(Viaje);
       const reservaRepository = manager.getRepository(Reserva);
 
@@ -213,6 +221,70 @@ export class ReservasService {
         estado: reservaCancelada.estado,
         fechaActualizacion: reservaCancelada.fechaActualizacion!,
       };
+    });
+
+    // La cancelación ya fue confirmada antes de notificar al conductor.
+    void this.notificarCancelacionReserva(respuesta.id);
+
+    return respuesta;
+  }
+
+  private async notificarNuevaReserva(reservaId: string): Promise<void> {
+    try {
+      const reserva = await this.obtenerReservaParaCorreo(reservaId);
+
+      if (reserva?.viaje?.conductor?.correo) {
+        await this.emailService.enviarNuevaReserva({
+          reservationId: reserva.id,
+          conductorEmail: reserva.viaje.conductor.correo,
+          conductorNombre: reserva.viaje.conductor.nombre,
+          pasajeroNombre: reserva.pasajero?.nombre,
+          rutaNombre: reserva.viaje.ruta?.nombre,
+          fechaSalida: reserva.viaje.fechaSalida,
+        });
+      }
+    } catch (error: unknown) {
+      const detail =
+        error instanceof Error ? error.message : 'Error desconocido';
+      this.logger.error(
+        `La reserva ${reservaId} se creó, pero no se pudo enviar su correo: ${detail}`,
+      );
+    }
+  }
+
+  private async notificarCancelacionReserva(reservaId: string): Promise<void> {
+    try {
+      const reserva = await this.obtenerReservaParaCorreo(reservaId);
+
+      if (reserva?.viaje?.conductor?.correo) {
+        await this.emailService.enviarCancelacionReserva({
+          reservationId: reserva.id,
+          conductorEmail: reserva.viaje.conductor.correo,
+          conductorNombre: reserva.viaje.conductor.nombre,
+          pasajeroNombre: reserva.pasajero?.nombre,
+          rutaNombre: reserva.viaje.ruta?.nombre,
+          fechaSalida: reserva.viaje.fechaSalida,
+        });
+      }
+    } catch (error: unknown) {
+      const detail =
+        error instanceof Error ? error.message : 'Error desconocido';
+      this.logger.error(
+        `La reserva ${reservaId} se canceló, pero no se pudo enviar su correo: ${detail}`,
+      );
+    }
+  }
+
+  private obtenerReservaParaCorreo(reservaId: string) {
+    return this.reservaRepository.findOne({
+      where: { id: reservaId },
+      relations: {
+        pasajero: true,
+        viaje: {
+          conductor: true,
+          ruta: true,
+        },
+      },
     });
   }
 
